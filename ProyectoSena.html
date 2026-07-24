@@ -550,6 +550,11 @@
         function guardarEstadoLocal() {
             localStorage.setItem('entregasSena', JSON.stringify(entregasPorEstudiante));
             localStorage.setItem('apelacionesSena', JSON.stringify(apelacionesPorEstudiante));
+            // Sincronizar también con Firebase para persistir entre dispositivos
+            if (typeof database !== 'undefined') {
+                database.ref('estado/entregas').set(entregasPorEstudiante);
+                database.ref('estado/apelaciones').set(apelacionesPorEstudiante);
+            }
         }
 
         resetearEntregas();
@@ -920,9 +925,9 @@
                 actualizarVentanaAprendices();
                 renderizarDashboardPendientes();
                 generarConsolidadoApelaciones();
-                guardarEstadoLocal();
+                guardarEstadoLocal(); // ← También guarda en Firebase
 
-                alert(`✅ Reporte structured con éxito.\nLas celdas vacías o con 'D' quedan listas para auditoría.`);
+                alert(`✅ Reporte cargado con éxito. Quedará guardado hasta que subas uno nuevo.`);
                 inputArchivo.value = '';
             };
 
@@ -1055,7 +1060,13 @@
                 actualizarVentanaAprendices();
                 generarConsolidadoApelaciones();
 
-                alert("🎯 Malla oficial filtrada por demanda masiva con éxito.");
+                // Guardar estado de la malla en Firebase para que persista
+                if (typeof database !== 'undefined') {
+                    database.ref('estado/malla').set(estadoMallaGlobal);
+                }
+                localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
+
+                alert("🎯 Malla oficial guardada. Quedará activa hasta que cargues una nueva.");
                 inputArchivo.value = '';
             };
 
@@ -1068,6 +1079,11 @@
             renderizarDashboardPendientes();
             actualizarVentanaAprendices();
             generarConsolidadoApelaciones();
+            // Guardar cambio individual en Firebase
+            if (typeof database !== 'undefined') {
+                database.ref(`estado/malla/${idEvidencia}`).set(isChecked);
+            }
+            localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
         }
 
         function actualizarContadores() {
@@ -1095,6 +1111,54 @@
         const database = firebase.database();
 
         let videosGlobales = [];
+
+        // =====================================================================
+        // AUTO-RESTAURAR ESTADO DESDE FIREBASE AL CARGAR LA PÁGINA
+        // Esto hace que el CSV y TXT se "recuerden" sin volver a subirlos
+        // =====================================================================
+        database.ref('estado').once('value', (snapshot) => {
+            const estado = snapshot.val();
+            if (!estado) return;
+
+            // Restaurar entregas del CSV
+            if (estado.entregas) {
+                Object.keys(estado.entregas).forEach(doc => {
+                    if (entregasPorEstudiante[doc]) {
+                        Object.assign(entregasPorEstudiante[doc], estado.entregas[doc]);
+                    }
+                });
+            }
+
+            // Restaurar apelaciones
+            if (estado.apelaciones) {
+                Object.keys(estado.apelaciones).forEach(doc => {
+                    if (apelacionesPorEstudiante[doc]) {
+                        Object.assign(apelacionesPorEstudiante[doc], estado.apelaciones[doc]);
+                    }
+                });
+            }
+
+            // Restaurar estado de la malla (Control de Guías)
+            if (estado.malla) {
+                Object.keys(estado.malla).forEach(id => {
+                    if (estadoMallaGlobal.hasOwnProperty(id)) {
+                        estadoMallaGlobal[id] = estado.malla[id];
+                    }
+                });
+                cargarTablaMallaOficial();
+                actualizarContadores();
+            }
+
+            // Actualizar todas las vistas
+            actualizarVentanaAprendices();
+            renderizarDashboardPendientes();
+            generarConsolidadoApelaciones();
+
+            // Guardar en localStorage también para acceso rápido
+            localStorage.setItem('entregasSena', JSON.stringify(entregasPorEstudiante));
+            localStorage.setItem('apelacionesSena', JSON.stringify(apelacionesPorEstudiante));
+            if (estado.malla) localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
+        });
 
         // Leer caché local inicialmente para no mostrar vacío
         const videosCache = localStorage.getItem('videosCacheSena');
