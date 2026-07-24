@@ -41,16 +41,21 @@
                 <p class="text-xs text-slate-400">Inicie sesión con su rol o número de identificación</p>
             </div>
             
+            <div class="flex border-b border-[#3a506b] mb-4">
+                <button id="btn-tab-login" onclick="cambiarTabAuth('login')" class="flex-1 py-2 text-sm font-bold text-emerald-400 border-b-2 border-emerald-400">Iniciar Sesión</button>
+                <button id="btn-tab-registro" onclick="cambiarTabAuth('registro')" class="flex-1 py-2 text-sm font-bold text-slate-400 border-b-2 border-transparent">Registrarse</button>
+            </div>
+
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Usuario / Documento</label>
-                    <input type="text" id="login-usuario" placeholder="Ingrese su usuario" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
+                    <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Cédula / Usuario</label>
+                    <input type="text" id="login-usuario" placeholder="Ingrese su cédula" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Contraseña</label>
                     <input type="password" id="login-password" placeholder="Ingrese su contraseña" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
                 </div>
-                <button onclick="ejecutarAutenticacion()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] font-bold py-3 rounded-lg transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
+                <button id="btn-auth-submit" onclick="ejecutarAutenticacion()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] font-bold py-3 rounded-lg transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
                     <i class="fa-solid fa-right-to-bracket"></i> Acceder al Sistema
                 </button>
             </div>
@@ -570,20 +575,84 @@
         const tablaApelacionesCuerpo = document.getElementById('tabla-apelaciones-cuerpo');
         const contadorApelacionesTotal = document.getElementById('contador-apelaciones-total');
 
-        // 🔐 CONTROL DE AUTENTICACIÓN Y ROLES
-        function ejecutarAutenticacion() {
-            const usuario = document.getElementById('login-usuario').value.trim().toLowerCase();
-            const password = document.getElementById('login-password').value.trim().toLowerCase();
-            
-            if (usuario === "admin" && password === "1234") {
-                sesionActiva = { autenticado: true, rol: "profesor", documento: "admin" };
-            } else if (usuario === "sena2026" && password === "sena2026") {
-                sesionActiva = { autenticado: true, rol: "aprendiz", documento: "sena2026" };
+        let modoAuth = 'login';
+        
+        function cambiarTabAuth(modo) {
+            modoAuth = modo;
+            const btnLogin = document.getElementById('btn-tab-login');
+            const btnRegistro = document.getElementById('btn-tab-registro');
+            const btnSubmit = document.getElementById('btn-auth-submit');
+
+            if (modo === 'login') {
+                btnLogin.className = "flex-1 py-2 text-sm font-bold text-emerald-400 border-b-2 border-emerald-400";
+                btnRegistro.className = "flex-1 py-2 text-sm font-bold text-slate-400 border-b-2 border-transparent";
+                btnSubmit.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Acceder al Sistema';
             } else {
-                alert("Credenciales inválidas.");
+                btnLogin.className = "flex-1 py-2 text-sm font-bold text-slate-400 border-b-2 border-transparent";
+                btnRegistro.className = "flex-1 py-2 text-sm font-bold text-emerald-400 border-b-2 border-emerald-400";
+                btnSubmit.innerHTML = '<i class="fa-solid fa-user-plus"></i> Registrarse';
+            }
+        }
+
+        async function ejecutarAutenticacion() {
+            const usuario = document.getElementById('login-usuario').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value.trim();
+            
+            if(!usuario || !password) {
+                alert("Por favor ingrese cédula y contraseña.");
                 return;
             }
 
+            if (usuario === "admin" && password === "1234") {
+                iniciarSesionExitosa({ autenticado: true, rol: "profesor", documento: "admin" });
+                return;
+            }
+
+            // Validar que el estudiante exista en la lista oficial antes de nada
+            const estudianteValido = LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento.toLowerCase() === usuario);
+            if (!estudianteValido) {
+                alert("La cédula no está registrada en la lista oficial de aprendices SENA.");
+                return;
+            }
+
+            // Usar Firebase para Auth
+            if (typeof database !== 'undefined') {
+                try {
+                    const snapshot = await database.ref('usuarios/' + usuario).once('value');
+                    const userData = snapshot.val();
+
+                    if (modoAuth === 'registro') {
+                        if (userData) {
+                            alert("Esta cédula ya está registrada. Por favor inicie sesión.");
+                        } else {
+                            await database.ref('usuarios/' + usuario).set({
+                                password: password,
+                                rol: 'aprendiz'
+                            });
+                            alert("✅ Registro exitoso. Iniciando sesión...");
+                            iniciarSesionExitosa({ autenticado: true, rol: "aprendiz", documento: usuario });
+                        }
+                    } else {
+                        // Login
+                        if (!userData) {
+                            alert("Cédula no registrada. Por favor seleccione 'Registrarse' primero.");
+                        } else if (userData.password !== password) {
+                            alert("Contraseña incorrecta.");
+                        } else {
+                            iniciarSesionExitosa({ autenticado: true, rol: userData.rol || "aprendiz", documento: usuario });
+                        }
+                    }
+                } catch(e) {
+                    alert("Error de conexión con Firebase. Intente nuevamente.");
+                    console.error(e);
+                }
+            } else {
+                alert("La base de datos aún no está inicializada.");
+            }
+        }
+
+        function iniciarSesionExitosa(sesion) {
+            sesionActiva = sesion;
             document.getElementById('pantalla-login').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
             
@@ -938,14 +1007,30 @@
         function construirSelectorDashboard() {
             if(!selectorEstudiantes) return;
             selectorEstudiantes.innerHTML = '';
-            LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
-                const opt = document.createElement('option');
-                opt.value = e.documento;
-                opt.textContent = `${e.apellidos} ${e.nombres}`;
-                selectorEstudiantes.appendChild(opt);
-            });
-            if(LISTADO_ESTUDIANTES_PROTEGIDO.length > 0) {
-                cambiarEstudianteActivo(LISTADO_ESTUDIANTES_PROTEGIDO[0].documento);
+            
+            if (sesionActiva.rol === 'profesor') {
+                // Admin: Ve a todos
+                selectorEstudiantes.disabled = false;
+                LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
+                    const opt = document.createElement('option');
+                    opt.value = e.documento;
+                    opt.textContent = `${e.apellidos} ${e.nombres}`;
+                    selectorEstudiantes.appendChild(opt);
+                });
+                if(LISTADO_ESTUDIANTES_PROTEGIDO.length > 0) {
+                    cambiarEstudianteActivo(LISTADO_ESTUDIANTES_PROTEGIDO[0].documento);
+                }
+            } else {
+                // Aprendiz: Solo ve el suyo
+                selectorEstudiantes.disabled = true;
+                const e = LISTADO_ESTUDIANTES_PROTEGIDO.find(est => est.documento === sesionActiva.documento);
+                if (e) {
+                    const opt = document.createElement('option');
+                    opt.value = e.documento;
+                    opt.textContent = `${e.apellidos} ${e.nombres}`;
+                    selectorEstudiantes.appendChild(opt);
+                    cambiarEstudianteActivo(e.documento);
+                }
             }
         }
 
