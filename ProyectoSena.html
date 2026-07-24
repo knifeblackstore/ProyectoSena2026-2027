@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENA Task Manager - Sistema de Roles Avanzado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background-color: #0b1329;
+            color: #f8fafc;
+        }
+        .window-pane.hidden, .role-restricted.hidden {
+            display: none !important;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1c2541;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3a506b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased h-screen overflow-hidden">
+
+    <div id="pantalla-login" class="fixed inset-0 bg-[#0b1329] z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1c2541] border border-[#3a506b] w-full max-w-md p-8 rounded-2xl shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <i class="fa-solid fa-graduation-cap text-5xl text-emerald-400"></i>
+                <h2 class="text-2xl font-black text-white tracking-wide">Servicio Nacional de Aprendizaje SENA - Ingreso</h2>
+                <p class="text-xs text-slate-400">Inicie sesión con su rol o número de identificación</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Usuario / Documento</label>
+                    <input type="text" id="login-usuario" placeholder="Ingrese su usuario" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Ingrese su contraseña" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
+                </div>
+                <button onclick="ejecutarAutenticacion()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] font-bold py-3 rounded-lg transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
+                    <i class="fa-solid fa-right-to-bracket"></i> Acceder al Sistema
+                </button>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div id="app-content" class="flex h-screen overflow-hidden hidden">
+
+        <aside class="w-64 bg-[#1c2541] p-6 flex flex-col justify-between hidden md:flex border-r border-[#3a506b]">
+            <div>
+                <div class="flex items-center gap-3 mb-8">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-emerald-400"></i>
+                    <h1 class="text-xl font-bold tracking-wider text-emerald-400">SENA TASK</h1>
+                </div>
+                
+                <nav class="space-y-3">
+                    <button id="nav-aprendices" onclick="conmutarVentana('window-aprendices', this)" class="w-full flex items-center gap-3 text-white bg-emerald-500 px-4 py-3 rounded-lg font-semibold transition-all">
+                        <i class="fa-solid fa-address-book"></i> Ventana Aprendices
+                    </button>
+                    <button id="nav-dashboard" onclick="conmutarVentana('window-dashboard', this)" class="role-restricted w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard Individual
+                    </button>
+                    <button id="nav-guias" onclick="conmutarVentana('window-guias', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
+                        <i class="fa-solid fa-toggle-on"></i> Control de Guías
+                    </button>
+                    <button id="nav-apelaciones" onclick="conmutarVentana('window-apelaciones', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all border border-transparent hover:border-amber-500/20">
+                        <i class="fa-solid fa-gavel text-amber-400"></i> Reporte Apelaciones
+                    </button>
+                    <button id="nav-videos" onclick="conmutarVentana('window-videos', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all border border-transparent hover:border-red-500/20">
+                        <i class="fa-brands fa-youtube text-red-500"></i> Videoteca (Clases)
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="border-t border-[#3a506b] pt-4 space-y-3">
+                <div class="flex items-center gap-3">
+                    <div id="avatar-rol" class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-black uppercase">--</div>
+                    <div class="truncate w-40">
+                        <p id="user-display-name" class="text-sm font-semibold truncate text-white">Malla Curricular</p>
+                        <p id="total-indicador" class="text-xs text-slate-400">0 Habilitadas</p>
+                    </div>
+                </div>
+                <button onclick="cerrarSesion()" class="w-full text-left text-xs text-rose-400 hover:text-rose-300 font-bold flex items-center gap-2 pt-2 border-t border-[#3a506b]/40">
+                    <i class="fa-solid fa-power-off"></i> Cerrar Sesión Activa
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-6 md:p-10">
+            
+            <section id="window-aprendices" class="window-pane space-y-6">
+                <header class="border-b border-[#3a506b] pb-4">
+                    <h2 class="text-3xl font-extrabold text-white">Ventana de Aprendices</h2>
+                    <p id="aprendices-subtitulo" class="text-slate-400">Cruza las guías habilitadas globales vs las entregadas ("A"). Permite reportar y hacer seguimiento a las apelaciones.</p>
+                </header>
+
+                <div id="panel-carga-csv" class="role-restricted bg-[#1c2541] border border-[#3a506b] p-5 rounded-xl space-y-4 shadow-lg">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-database text-emerald-400 text-lg"></i>
+                        <h3 class="text-md font-bold text-white">Cargar Reporte de Calificaciones (.csv)</h3>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        Sube el archivo Excel guardado como <code class="bg-slate-900 px-1 text-emerald-300 rounded font-mono">.csv</code>. El sistema mapeará las guías asignando como aprobadas únicamente las que contengan la letra <code class="bg-slate-900 px-1 text-emerald-400 rounded font-mono">A</code>.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                        <input type="file" id="archivo-csv-entregas" accept=".csv" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#0b1329] file:text-emerald-400 hover:file:bg-[#0b1329]/80 file:cursor-pointer bg-[#1c2541] border border-[#3a506b]/70 rounded-lg p-1">
+                        <button onclick="procesarArchivoCsv()" class="bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] text-xs font-bold px-5 py-2.5 rounded-lg whitespace-nowrap transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-sync"></i> Procesar Reporte Horizontal
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="tarjetas-aprendices-container" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    </div>
+            </section>
+
+            <section id="window-dashboard" class="window-pane role-restricted space-y-6 hidden">
+                <header class="border-b border-[#3a506b] pb-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-white">Dashboard Individual</h2>
+                            <p class="text-slate-400">Seleccione un aprendiz para validar y calificar las guías que han sido habilitadas.</p>
+                        </div>
+                        
+                        <div class="flex flex-col gap-1 w-full md:w-80">
+                            <label class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-users text-xs"></i> Seleccionar Aprendiz:
+                            </label>
+                            <select id="selector-estudiantes" onchange="cambiarEstudianteActivo(this.value)" class="bg-[#1c2541] border border-[#3a506b] text-slate-200 text-sm rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 outline-none cursor-pointer font-medium shadow-lg">
+                            </select>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="bg-[#1c2541]/40 border border-[#3a506b]/50 p-4 rounded-xl flex items-center gap-4">
+                    <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+                        <i class="fa-solid fa-address-card text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-mono tracking-widest text-slate-400">Perfil en Enfoque</span>
+                        <h4 id="dash-nombre-estudiante" class="text-lg font-bold text-white leading-tight">Cargando...</h4>
+                        <p id="dash-documento-estudiante" class="text-xs font-mono text-emerald-400 mt-0.5">Doc: --</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check"></i> Guías Habilitadas para este Aprendiz
+                    </h3>
+                    <div id="contenedor-pendientes" class="grid grid-cols-1 gap-3 max-h-[450px] overflow-y-auto pr-2">
+                    </div>
+                </div>
+            </section>
+
+            <section id="window-guias" class="window-pane space-y-6 hidden">
+                <header class="border-b border-[#3a506b] pb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-white">Control Maestro de Guías</h2>
+                        <p id="guias-subtitulo" class="text-slate-400">Habilite de forma manual o cargue un listado masivo en texto plano (`.txt`).</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2 w-full lg:w-auto">
+                        <button id="btn-guardar-malla" onclick="guardarCambiosMalla()" class="role-restricted w-full lg:w-auto bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] font-bold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all text-sm">
+                            <i class="fa-solid fa-floppy-disk"></i> Guardar Malla
+                        </button>
+                        <span id="notificacion-guardado" class="text-xs text-emerald-400 font-semibold opacity-0 transition-opacity duration-300">
+                            ¡Malla oficial actualizada!
+                        </span>
+                    </div>
+                </header>
+
+                <div id="panel-carga-txt" class="role-restricted bg-[#1c2541] border border-[#3a506b] p-5 rounded-xl space-y-4 shadow-lg">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-file-import text-emerald-400 text-lg"></i>
+                        <h3 class="text-md font-bold text-white">Carga Masiva de Habilitaciones (.txt)</h3>
+                    </div>
+                    <p class="text-xs text-slate-400">Sube un archivo de texto donde cada línea sea el ID exacto de la guía a habilitar.</p>
+                    
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                        <input type="file" id="archivo-txt-guias" accept=".txt" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#0b1329] file:text-emerald-400 hover:file:bg-[#0b1329]/80 file:cursor-pointer bg-[#1c2541] border border-[#3a506b]/70 rounded-lg p-1">
+                        <button onclick="procesarArchivoTxt()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-5 py-2.5 rounded-lg whitespace-nowrap transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Aplicar Filtro Masivo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-[#3a506b] bg-[#0b1329] max-h-[450px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-[#1c2541] z-10 shadow-md">
+                            <tr class="border-b border-[#3a506b] text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                <th class="p-4 w-1/4">ID Evidencia</th>
+                                <th class="p-4 w-1/2">Nombre de la Guía</th>
+                                <th class="p-4 w-1/4 text-center">Exigir (Global)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-evidencias-tabla" class="divide-y divide-[#3a506b]/40 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="window-apelaciones" class="window-pane space-y-6 hidden">
+                <header class="border-b border-[#3a506b] pb-4">
+                    <h2 class="text-3xl font-extrabold text-white">Reporte General de Apelaciones</h2>
+                    <p id="apelaciones-subtitulo" class="text-slate-400">Consolidado en tiempo real. Permite cambiar el estado a Solucionado o Escalado de forma inmediata.</p>
+                </header>
+
+                <div class="bg-[#1c2541]/30 border border-[#3a506b]/60 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-amber-500/10 rounded-lg text-amber-400 border border-amber-500/20">
+                            <i class="fa-solid fa-gavel text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white">Filtro de Auditoría Interna</h3>
+                            <p class="text-xs text-slate-400">Gestiona las novedades y sincroniza la respuesta directamente con la Ventana de Aprendices.</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="contador-apelaciones-total" class="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 font-mono text-xs font-bold">
+                            0 Casos Encontrados
+                        </span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-[#3a506b] bg-[#0b1329] max-h-[500px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-[#1c2541] z-10 shadow-md">
+                            <tr class="border-b border-[#3a506b] text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                <th class="p-4">Identificación</th>
+                                <th class="p-4">Aprendiz</th>
+                                <th class="p-4">Código Guía / Evidencia</th>
+                                <th class="p-4">Nombre de la Actividad</th>
+                                <th class="p-4 text-center">Estado de Gestión</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-apelaciones-cuerpo" class="divide-y divide-[#3a506b]/40 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="window-videos" class="window-pane space-y-6 hidden">
+                <header class="border-b border-[#3a506b] pb-4">
+                    <h2 class="text-3xl font-extrabold text-white">Videoteca de Apoyo</h2>
+                    <p class="text-slate-400">Encuentra aquí todas las grabaciones de las sesiones, organizadas por instructor.</p>
+                </header>
+
+                <div class="role-restricted bg-[#1c2541] border border-amber-500/50 p-5 rounded-xl space-y-4 shadow-lg shadow-amber-500/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-link text-amber-400 text-lg"></i>
+                            <h3 class="text-md font-bold text-white">Sincronización Automática (Nube)</h3>
+                        </div>
+                        <span id="estado-conexion-excel" class="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 rounded-lg text-xs font-bold uppercase tracking-wider">🟢 Conectado a Firebase</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Todo el progreso y los videos se guardan automáticamente en la nube (Firebase Realtime Database) y se sincronizan al instante en todos los dispositivos.</p>
+
+                    <div id="form-subir-video" class="pt-4 border-t border-[#3a506b] mt-4">
+                        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3">Subir Nuevo Video</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div class="md:col-span-4"><input type="text" id="v-titulo" placeholder="Título (ej: Clase 22-10-25)" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"></div>
+                            <div class="md:col-span-4"><input type="text" id="v-url" placeholder="URL YouTube" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"></div>
+                            <div class="md:col-span-2">
+                                <input type="text" id="v-instructor" list="lista-instructores" placeholder="Instructor" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                                <datalist id="lista-instructores"></datalist>
+                            </div>
+                            <div class="md:col-span-2"><button onclick="subirNuevoVideo()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] font-bold py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Subir</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contenedor-videos-ui" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <p class="text-slate-400 text-sm text-center col-span-full py-10">Esperando conexión con el archivo Excel...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // 📚 TODAS LAS GUÍAS RESTAURADAS DEL ARCHIVO ORIGINAL
+        const LISTADO_OFICIAL_PROTEGIDO = [
+            { id: "GA1-220501092-AA1-EV01", nombre: "Infografía sobre la teoría general de sistemas" },
+            { id: "GA1-220501092-AA1-EV02", nombre: "Identificación de procesos organizacionales" },
+            { id: "GA1-220501092-AA1-EV03", nombre: "Mapa de procesos del software a construir" },
+            { id: "GA1-220501092-AA2-EV01", nombre: "Mapa mental sobre ingeniería de requisitos" },
+            { id: "GA1-220501092-AA2-EV02", nombre: "Foro temático - Fuentes de requisitos" },
+            { id: "GA1-220501092-AA3-EV01", nombre: "Diseño del instrumento de recolección de información" },
+            { id: "GA1-220501092-AA3-EV02", nombre: "Formulación del proyecto de software" },
+            { id: "GA1-220501092-AA3-EV03", nombre: "Formulario de recolección de información" },
+            { id: "GA1-220501092-AA4-EV01", nombre: "Especificación de los requerimientos funcionales y no funcionales del software" },
+            { id: "GA1-220501092-AA4-EV02", nombre: "Documento con especificación de requerimientos" },
+            { id: "GA1-220501092-AA5-EV01", nombre: "Determinación de las especificaciones funcionales del software y metodología a utilizar" },
+            { id: "GA1-220501092-AA5-EV02", nombre: "Informe de evaluación de los requerimientos" },
+            { id: "GA1-220501093-AA1-EV01", nombre: "Taller. Metodologías de desarrollo de software" },
+            { id: "GA1-220501093-AA1-EV02", nombre: "Infografía sobre metodologías de desarrollo de software" },
+            { id: "GA1-220501093-AA1-EV03", nombre: "Foro - Especificación de la metodología a aplicar" },
+            { id: "GA1-220501093-AA1-EV04", nombre: "Documento sobre la metodología para el proyecto de desarrollo de software" },
+            { id: "GA1-220501046-AA1-EV01", nombre: "Mapa mental - Software y servicios de Internet" },
+            { id: "GA1-220501046-AA2-EV01", nombre: "Taller. Utilización de las herramientas de ofimática" },
+            { id: "GA1-220501046-AA3-EV01", nombre: "Informe. Pertinencia y efectividad de los recursos utilizados según requerimientos" },
+            { id: "GA1-220501046-AA4-EV01", nombre: "Plan de mejora de productos y procesos con la incorporación de TIC" },
+            { id: "GA1-240202501-AA1-EV01", nombre: "Cuestionario (Prueba de Conocimiento)" },
+            { id: "GA1-240202501-AA1-EV02", nombre: "Video presentation" },
+            { id: "GA1-240202501-AA1-EV03", nombre: "Folleto" },
+            { id: "GA2-220501093-AA1-EV01", nombre: "Foro temático - Lenguaje Unificado de Modelado (UML)" },
+            { id: "GA2-220501093-AA1-EV02", nombre: "Elaboración de diagramas y plantillas para casos de uso del proyecto" },
+            { id: "GA2-220501093-AA1-EV03", nombre: "Elaboración de historias de usuario del proyecto" },
+            { id: "GA2-220501093-AA1-EV04", nombre: "Diagramas y documentation de actividades del proyecto" },
+            { id: "GA2-220501093-AA2-EV01", nombre: "Elaboración de los diagramas del modelo de dominio del proyecto" },
+            { id: "GA2-220501093-AA3-EV01", nombre: "Mapa conceptual sobre validación de documentos" },
+            { id: "GA2-220501093-AA3-EV02", nombre: "Elaboración del informe de análisis con listas de chequeo para la validación de artefactos" },
+            { id: "GA2-220501094-AA1-EV01", nombre: "Foro temático - Licenciamiento de software" },
+            { id: "GA2-220501094-AA1-EV02", fontMono: true, nombre: "Diseño de las fichas técnicas para la recolección de la información" },
+            { id: "GA2-220501094-AA1-EV03", nombre: "Especificación de los referentes técnicos y estimación de las condiciones económicas" },
+            { id: "GA2-220501094-AA2-EV01", nombre: "Ficha técnica" },
+            { id: "GA2-220501094-AA3-EV01", nombre: "Diseño de tablas comparativas sobre presupuestos de hardware y software" },
+            { id: "GA2-220501094-AA3-EV02", nombre: "Propuesta técnica y económica para la implementación del proyecto" },
+            { id: "GA2-220501094-AA4-EV01", nombre: "Taller. Especificación del modelo conceptual y propuesta técnica del proyecto de software" },
+            { id: "GA2-220501094-AA4-EV02", nombre: "Propuesta técnica y económica con ajustes" },
+            { id: "GA2-240201528-AA1-EV01", nombre: "Cuestionario: procedimientos aritméticos" },
+            { id: "GA2-240201528-AA2-EV01", nombre: "Informe: planteamiento de ecuación" },
+            { id: "GA2-240201528-AA3-EV01", nombre: "Video sustentación" },
+            { id: "GA2-240201528-AA4-EV01", nombre: "Algoritmo para el cálculo de áreas y volúmenes" },
+            { id: "GA2-240202501-AA1-EV01", nombre: "Cuestionario (Prueba de Conocimiento)" },
+            { id: "GA2-240202501-AA1-EV02", nombre: "Video entrevista virtual" },
+            { id: "GA2-240202501-AA1-EV03", nombre: "Crónica" },
+            { id: "GA2-240202501-AA2-EV01", nombre: "Cuestionario" },
+            { id: "GA2-240202501-AA2-EV02", nombre: "Presentación" },
+            { id: "GA2-240202501-AA2-EV03", nombre: "Documento escrito" },
+            { id: "GA3-220501093-AA1-EV01", nombre: "Bases conceptuales de lógica proposicional" },
+            { id: "GA3-220501093-AA1-EV02", nombre: "Taller de resolución de problemas de algoritmos en pseudocódigo y diagramas de flujo" },
+            { id: "GA3-220501093-AA2-EV01", nombre: "Fundamentos de programación estructurada y estructuras cíclicas" },
+            { id: "GA3-220501093-AA2-EV02", nombre: "Foro temático - Estructuras de programación" },
+            { id: "GA3-220501093-AA2-EV03", nombre: "Taller funciones y procedimientos en la solución de algoritmos" },
+            { id: "GA3-220501093-AA3-EV01", nombre: "Bases teóricas de estructuras de almacenamiento en memoria" },
+            { id: "GA3-220501093-AA3-EV02", nombre: "Resolución a problemas algorítmicos aplicando estructuras de almacenamiento" },
+            { id: "GA3-220201501-AA1-EV01", nombre: "Cuestionario (Ciencias)" },
+            { id: "GA3-220201501-AA2-EV01", nombre: "Video expositivo sobre experimento de aplicación" },
+            { id: "GA3-220201501-AA3-EV01", nombre: "Informe de laboratorio" },
+            { id: "GA3-220201501-AA4-EV01", nombre: "Video expositivo sobre experimento de aplicación (Avanzado)" },
+            { id: "GA3-220201501-AA4-EV02", nombre: "Bitácora de procesos desarrollados en la competencia" },
+            { id: "GA3-240202501-AA1-EV01", nombre: "Cuestionario (Inglés)" },
+            { id: "GA3-240202501-AA1-EV02", nombre: "Audio (Inglés)" },
+            { id: "GA3-240202501-AA1-EV03", nombre: "Foro (Inglés)" },
+            { id: "GA3-240202501-AA2-EV01", nombre: "Cuestionario II (Inglés)" },
+            { id: "GA3-240202501-AA2-EV02", nombre: "Audio II (Inglés)" },
+            { id: "GA3-240202501-AA2-EV03", nombre: "Foro II (Inglés)" },
+            { id: "GA4-220501095-AA1-EV01", nombre: "Diseñar el modelo conceptual y lógico, de acuerdo al caso de estudio" },
+            { id: "GA4-220501095-AA1-EV02", nombre: "Modelo conceptual y lógico para el proyecto desarrollo de software" },
+            { id: "GA4-220501095-AA2-EV01", nombre: "Taller de conceptos y principios de programación orientada a objetos" },
+            { id: "GA4-220501095-AA2-EV02", nombre: "Informe de entregables para el proyecto de desarrollo de software" },
+            { id: "GA4-220501095-AA2-EV03", nombre: "Bases conceptuales acerca del lenguaje unificado de modelado y patrones de diseño" },
+            { id: "GA4-220501095-AA2-EV04", nombre: "Diagrama de clases del proyecto de software" },
+            { id: "GA4-220501095-AA2-EV05", nombre: "Desarrollar la arquitectura de software, de acuerdo con el patrón de diseño seleccionado" },
+            { id: "GA4-220501095-AA2-EV06", nombre: "Taller. Arquitectura de software" },
+            { id: "GA4-220501095-AA3-EV01", nombre: "Mapa conceptual - Identificación y caracterización de los componentes del ciclo de vida del software" },
+            { id: "GA4-220501095-AA3-EV02", nombre: "Foro - Implementar la arquitectura de software" },
+            { id: "GA4-220501095-AA3-EV03", nombre: "Diagrama de despliegue para caso de estudio y proyecto de software" },
+            { id: "GA4-220501095-AA4-EV01", nombre: "Taller sobre validación de documentos" },
+            { id: "GA4-220501095-AA4-EV02", nombre: "Diseño de instrumentos para verificación de artefactos" },
+            { id: "GA4-220501095-AA4-EV03", nombre: "Listas de chequeo para validación de documentación de diseño" },
+            { id: "GA4-220501095-AA4-EV04", nombre: "Informe de evaluación a los artefactos de diseño del software" },
+            { id: "GA4-240201524-AA1-EV01", nombre: "Video. ¿Cómo nos comunicamos a través del discurso?" },
+            { id: "GA4-240201524-AA2-EV01", nombre: "Video. La comunicación como expresión humana" },
+            { id: "GA4-240201524-AA3-EV01", nombre: "Infografía. Communication de la interpretación del entorno" },
+            { id: "GA4-240201524-AA4-EV01", nombre: "Informe. Creación de contenidos comunicativos" },
+            { id: "GA4-240202501-AA1-EV01", nombre: "Cuestionario (Competencia Idiomas)" },
+            { id: "GA4-240202501-AA1-EV02", nombre: "Mapa mental" },
+            { id: "GA4-240202501-AA1-EV03", nombre: "Blog" },
+            { id: "GA5-220501095-AA1-EV01", nombre: "Taller sobre construcción del prototipo del software" },
+            { id: "GA5-220501095-AA1-EV02", nombre: "Nociones de reglas de usabilidad y accesibilidad en aplicaciones independientes" },
+            { id: "GA5-220501095-AA1-EV03", nombre: "Elaboración de interfaz gráfica y mapa de navegación" },
+            { id: "GA5-220501095-AA1-EV04", nombre: "Maquetación de la interfaz gráfica en HTML" },
+            { id: "GA5-220501095-AA1-EV05", nombre: "Mapa de navegación" },
+            { id: "GA5-220501095-AA1-EV06", nombre: "Nociones de reglas de usabilidad y accesibilidad en aplicaciones independientes móviles" },
+            { id: "GA5-220501095-AA1-EV07", nombre: "Elaboración de interfaz gráfica y mapa de navegación cumpliendo con reglas de usabilidad y accesibilidad app móvil" },
+            { id: "GA5-220501095-AA1-EV08", nombre: "Maquetación de la interfaz gráfica en XML – Android" },
+            { id: "GA5-240201064-AA1-EV01", nombre: "Mapa mental (Investigación)" },
+            { id: "GA5-240201064-AA2-EV01", nombre: "Propuesta de investigación" },
+            { id: "GA5-240202501-AA1-EV01", nombre: "Diagrama de flujo" },
+            { id: "GA5-240202501-AA1-EV02", nombre: "Ensayo" },
+            { id: "GA5-240202501-AA1-EV03", nombre: "Video" },
+            { id: "AA1-EV01", nombre: "Infografía" },
+            { id: "AA2-EV01", nombre: "Foro temático" },
+            { id: "AA3-EV01", nombre: "Crucigrama" },
+            { id: "AA4-EV01", nombre: "Cuadro sinóptico" },
+            { id: "AA4-EV02", nombre: "Taller" },
+            { id: "GA6-220501096-AA1-EV01", nombre: "Resolución de problemas aplicando el modelo relacional, cardinalidad y normalización" },
+            { id: "GA6-220501096-AA1-EV02", nombre: "Modelo entidad relación de caso" },
+            { id: "GA6-220501096-AA1-EV03", nombre: "Creación de los objetos de la base de datos" },
+            { id: "GA6-220501096-AA1-EV04", nombre: "Elaboración de las bases de datos" },
+            { id: "GA6-220501096-AA2-EV01", nombre: "Destrezas y conocimientos en el manejo de sentencias DDL y DML de SQL" },
+            { id: "GA6-220501096-AA2-EV02", nombre: "Creación de la estructura de la BD y aplicación de restricciones" },
+            { id: "GA6-220501096-AA2-EV03", nombre: "Script bases de datos del proyecto" },
+            { id: "GA6-220501096-AA3-EV01", nombre: "Selección herramientas para prototipado" },
+            { id: "GA6-220501096-AA3-EV02", nombre: "Crear el diseño del sitio web y/o móviles utilizando sus componentes y tecnologías respectivas" },
+            { id: "GA6-220501096-AA3-EV03", nombre: "Interfaces gráficas según requerimientos del proyecto" },
+            { id: "GA6-220501096-AA4-EV01", nombre: "Fundamentos en la implementación de componentes front-end, HTML, CSS, JS" },
+            { id: "GA6-220501096-AA4-EV02", nombre: "Establecer los componentes front-end de la aplicación web" },
+            { id: "GA6-220501096-AA4-EV03", nombre: "Diseño front-end que cumpla con los requerimientos del proyecto" },
+            { id: "GA6-230101507-AA1-EV01", nombre: "Foro temático - Identificar y establecer las técnicas de coordinación motriz" },
+            { id: "GA6-230101507-AA2-EV01", nombre: "Infografía – Estilos de vida saludable" },
+            { id: "GA6-230101507-AA3-EV01", nombre: "Ficha antropométrica de valoración de la condición" },
+            { id: "GA6-230101507-AA4-EV01", nombre: "Folleto de lesiones más comunes en el trabajo o vida cotidiana, y la importancia de las pausas activas" },
+            { id: "GA6-240202501-AA1-EV01", nombre: "Documento escrito" },
+            { id: "GA6-240202501-AA1-EV02", nombre: "Video" },
+            { id: "GA6-240202501-AA1-EV03", nombre: "Foro" },
+            { id: "GA7-220501096-AA1-EV01", nombre: "Informe técnico de plan de trabajo para construcción de software" },
+            { id: "GA7-220501096-AA1-EV02", nombre: "Definir estándares de codificación, de acuerdo con la plataforma de desarrollo elegida" },
+            { id: "GA7-220501096-AA1-EV03", nombre: "Identifica herramientas de versionamiento" },
+            { id: "GA7-220501096-AA1-EV04", nombre: "Instalación y configuración de herramienta de versionamiento (local/web)" },
+            { id: "GA7-220501096-AA1-EV05", nombre: "Herramientas de versionamiento (GIT) instalada y configurada" },
+            { id: "GA7-220501096-AA2-EV01", nombre: "Codificación de módulos del software" },
+            { id: "GA7-220501096-AA2-EV02", nombre: "Módulos de software codificados y probados" },
+            { id: "GA7-220501096-AA3-EV01", nombre: "Codificación de módulos del software stand-alone, web y móvil" },
+            { id: "GA7-220501096-AA3-EV02", nombre: "Módulos de software stand-alone, web y móvil codificados y probados" },
+            { id: "GA7-220501096-AA4-EV01", nombre: "Taller sobre componentes front-end" },
+            { id: "GA7-220501096-AA4-EV02", fontMono: true, nombre: "Verificación de procedimientos para la definición de componentes front-end de la aplicación" },
+            { id: "GA7-220501096-AA4-EV03", nombre: "Componente front-end del proyecto formativo y proyectos de clase" },
+            { id: "GA7-220501096-AA5-EV01", nombre: "Diseño y desarrollo de servicios web - caso" },
+            { id: "GA7-220501096-AA5-EV02", nombre: "API" },
+            { id: "GA7-220501096-AA5-EV03", nombre: "Diseño y desarrollo de servicios web – proyecto" },
+            { id: "GA7-220501096-AA5-EV04", nombre: "API del proyecto" },
+            { id: "GA8-220501096-AA1-EV01", nombre: "Desarrollar software a partir de la integración de sus módulos componentes" },
+            { id: "GA8-220501096-AA1-EV02", nombre: "Módulos integrados" },
+            { id: "GA8-220501096-AA2-EV01", nombre: "Taller. Integración, tecnologías emergentes y disruptivas" },
+            { id: "GA8-220501096-AA2-EV02", nombre: "APK (desarrollar módulos móviles según requerimientos del proyecto)" },
+            { id: "GA8-220501096-AA2-EV03", nombre: "Taller sobre tecnologías emergentes y disruptivas" },
+            { id: "GA8-220501096-AA2-EV04", nombre: "Video exposition sobre machine learning" },
+            { id: "GA8-220501096-AA2-EV05", nombre: "Texto argumentativo sobre blockchain" },
+            { id: "GA8-220601501-AA1-EV01", nombre: "Análisis de caso de situaciones que se presentan en el contexto ambiental y del SST" },
+            { id: "GA8-220601501-AA2-EV01", nombre: "Diagrama de Ishikawa o Espina de Pescado, sobre las estrategias para la prevención y control de los impactos ambientales, accidentes y enfermedades laborales (ATEL)" },
+            { id: "GA8-220601501-AA3-EV01", nombre: "Mapa mental respecto a los plans and actions establecidos en el medio ambiente y SST" },
+            { id: "GA8-220601501-AA4-EV01", nombre: "Video expositivo sobre oportunidades de mejora en el medio ambiente y SST" },
+            { id: "GA9-220501096-AA1-EV01", nombre: "Taller sobre codificación de módulos del software" },
+            { id: "GA9-220501096-AA1-EV02", nombre: "Realiza plan pruebas de software" },
+            { id: "GA9-220501096-AA2-EV01", nombre: "Diseña casos y define el ambiente de pruebas de software según proyecto" },
+            { id: "GA9-220501096-AA3-EV01", nombre: "Documenta pruebas de software, de acuerdo a la planificación" },
+            { id: "GA9-220501096-AA3-EV02", nombre: "Reporte de plan de pruebas ejecutadas" },
+            { id: "GA9-240201526-AA1-EV01", nombre: "Presentación del proyecto de vida" },
+            { id: "GA9-240201526-AA2-EV01", nombre: "Diagrama de sistemas" },
+            { id: "GA9-240201526-AA3-EV01", nombre: "Estrategia para el uso racional de los recursos naturales" },
+            { id: "GA9-240201526-AA4-EV01", nombre: "Solución del caso" },
+            { id: "GA10-220501097-AA1-EV01", nombre: "Conceptos y principios de hardware e instalación de software" },
+            { id: "GA10-220501097-AA2-EV01", nombre: "Elaborar plan de validación de características mínimas de hardware para el software" },
+            { id: "GA10-220501097-AA3-EV01", nombre: "Software instalado en la plataforma del cliente" },
+            { id: "GA10-220501097-AA4-EV01", nombre: "Conceptos y principios acerca de configuración de servicios" },
+            { id: "GA10-220501097-AA5-EV01", nombre: "Configuración de servicios, bases de datos y software en el equipo del cliente" },
+            { id: "GA10-220501097-AA6-EV01", nombre: "Archivos cargados en la plataforma de producción" },
+            { id: "GA10-220501097-AA7-EV01", nombre: "Realización de pruebas de funcionalidad del software" },
+            { id: "GA10-220501097-AA8-EV01", nombre: "Diseñar plan de mantenimiento y soporte del software" },
+            { id: "GA10-220501097-AA9-EV01", nombre: "Documentación de plan de migración y respaldo de los datos del software" },
+            { id: "GA10-220501097-AA10-EV01", nombre: "Elabora documentos técnicos y de usuario del software" },
+            { id: "GA10-220501097-AA11-EV01", nombre: "Elabora el manual de usuario, de acuerdo con las funcionalidades del software" },
+            { id: "GA10-220501097-AA12-EV01", nombre: "Elabora plan de capacitación y realización de pruebas de aceptación del cliente" },
+            { id: "GA10-220501097-AA13-EV01", nombre: "Documentación plan de capacitación and acta de entrega del proyecto de software" },
+            { id: "GA10-240201529-AA1-EV01", nombre: "DOFA personal" },
+            { id: "GA10-240201529-AA2-EV01", nombre: "Pitch idea de negocio" },
+            { id: "GA10-240201529-AA2-EV02", nombre: "Modelo Canvas del emprendimiento" },
+            { id: "GA10-240201529-AA3-EV01", nombre: "Plan de negocio" },
+            { id: "GA11-220501098-AA1-EV01", nombre: "Infografía procesos de desarrollo del software" },
+            { id: "GA11-220501098-AA1-EV02", nombre: "Aplicación de buenas prácticas de calidad documentadas in las disciplinas de calidad de software" },
+            { id: "GA11-220501098-AA1-EV03", nombre: "Diseño y diligenciamiento de instrumentos para documentar procesos de calidad del software" },
+            { id: "GA11-220501098-AA1-EV04", nombre: "Bitácoras con los procesos documentados" },
+            { id: "GA11-220501098-AA2-EV01", nombre: "Creación de informe con los resultados del comportamiento del software" },
+            { id: "GA11-220501098-AA2-EV02", nombre: "Realizar informe de las experiencias aprendidas en el proceso de verification del software" },
+            { id: "GA11-220501098-AA3-EV01", nombre: "Realiza ajustes en los procesos de desarrollo" },
+            { id: "GA11-220501098-AA3-EV02", nombre: "Documento con las verificaciones de condiciones de calidad del producto de software ajustado" },
+            { id: "GA11-210201501-AA1-EV01", nombre: "Taller" },
+            { id: "GA11-210201501-AA1-EV02", nombre: "Foro sobre características del trabajo en contexto local" },
+            { id: "GA11-210201501-AA2-EV01", nombre: "Informe sobre trabajo decente, ciudadanía laboral, derechos individuales y colectivos en el trabajo" },
+            { id: "GA11-210201501-AA2-EV02", nombre: "Foro sobre el convenio colectivo del trabajo y la libertad sindical" },
+            { id: "GA11-210201501-AA2-EV03", nombre: "Gráfico sobre la negociación colectiva" },
+            { id: "GA11-210201501-AA2-EV04", nombre: "Infografía sobre la huelga" },
+            { id: "GA11-210201501-AA3-EV01", nombre: "Mapa mental violación de derechos del trabajo" },
+            { id: "GA11-210201501-AA3-EV02", nombre: "Foro estudio de caso" },
+            { id: "GA11-210201501-AA3-EV03", nombre: "Cuadro comparativo sobre el derecho de petición y la acción de tutela" },
+            { id: "GA11-210201501-AA4-EV01", nombre: "Foro Estado social de derecho" },
+            { id: "GA11-210201501-AA4-EV02", nombre: "Presentación" }
+        ];
+
+        // 👥 LOS 24 APRENDICES RESTAURADOS COMPLETAMENTE
+        const LISTADO_ESTUDIANTES_PROTEGIDO = [
+            { documento: "1116615833cc", nombres: "DUBAN ENRIQUE", apellidos: "ACEVEDO GAUCHA" },
+            { documento: "1043635895cc", nombres: "JAIR ENRIQUE", apellidos: "ACOSTA BARRIOS" },
+            { documento: "1012368168cc", nombres: "EDISON NORBERTO", apellidos: "AGUILAR CARREÑO" },
+            { documento: "1116805881cc", nombres: "CESAR FABIAN", apellidos: "AVILA SALCEDO" },
+            { documento: "1016111144cc", nombres: "KELLY JULIANA", apellidos: "BAUTISTA AVILA" },
+            { documento: "1201217364ti", nombres: "DANIELA ISABEL", apellidos: "BETANCOURT SANDOVAL" },
+            { documento: "1088282456cc", nombres: "YUDY XIMENA", apellidos: "CAIRASCO GIRALDO" },
+            { documento: "1233510282cc", nombres: "YEIMY KATHERINE", apellidos: "CARVAJAL ALBA" },
+            { documento: "1005892309cc", nombres: "JOSE DAVID", apellidos: "CORTES ORTIZ" },
+            { documento: "1054923776cc", nombres: "JUAN CARLOS", apellidos: "CUARTAS VALENCIA" },
+            { documento: "5934940ppt",  nombres: "LUIS ARTURO", apellidos: "LUGO GARCIA" },
+            { documento: "1073508685cc", nombres: "OMAR ULPIANO", apellidos: "MOLINA MALAVER" },
+            { documento: "1004967242cc", nombres: "KRISTHIAN JOSÉ", apellidos: "MONTOYA MONTOYA" },
+            { documento: "1022988926cc", nombres: "HAROLD DAVID", apellidos: "ORJUELA RODRIGUEZ" },
+            { documento: "1070464922cc", nombres: "FRANKIN DANIEL", apellidos: "PANCHE TREJOS" },
+            { documento: "1012418043cc", nombres: "RAUL FERNANDO", apellidos: "POLANCO ORTIZ" },
+            { documento: "1033685089cc", nombres: "YEISON STEWAR", apellidos: "RAMIREZ CARDENAS" },
+            { documento: "1002397143cc", nombres: "CARLOS DUVAN", apellidos: "RODRIGUEZ HERRERA" },
+            { documento: "1033710935ti", nombres: "SERGIO ANDRES", apellidos: "SIERRA CADENA" },
+            { documento: "1090455063cc", nombres: "SERGIO ANDRES", apellidos: "SOLER BETANCOURT" },
+            { documento: "1053822945cc", nombres: "ALEX ARMANDO", apellidos: "TIQUE JIMENEZ" },
+            { documento: "31487309cc",   nombres: "IVONNE", apellidos: "TORRES CHILITO" },
+            { documento: "1088288308cc", nombres: "ANDRES MAURICIO", apellidos: "VALENCIA ARANGO" },
+            { documento: "1035328518cc", nombres: "SEBASTIAN", apellidos: "ZULUAGA BETANCUR" }
+        ];
+
+        // LOGS DE CONTROLES GLOBALES
+        let sesionActiva = { autenticado: false, rol: "", documento: "" };
+        const estadoMallaGlobal = {};
+        const entregasPorEstudiante = {};
+        const apelacionesPorEstudiante = {};
+
+        // Inicializamos todas las guías en falso
+        LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false);
+        
+        function resetearEntregas() {
+            LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
+                entregasPorEstudiante[e.documento] = {};
+                apelacionesPorEstudiante[e.documento] = {};
+                LISTADO_OFICIAL_PROTEGIDO.forEach(act => {
+                    entregasPorEstudiante[e.documento][act.id] = false;
+                    apelacionesPorEstudiante[e.documento][act.id] = "NINGUNA";
+                });
+            });
+            
+            const cacheEnt = localStorage.getItem('entregasSena');
+            const cacheAp = localStorage.getItem('apelacionesSena');
+            if (cacheEnt) { try { Object.assign(entregasPorEstudiante, JSON.parse(cacheEnt)); } catch(e){} }
+            if (cacheAp) { try { Object.assign(apelacionesPorEstudiante, JSON.parse(cacheAp)); } catch(e){} }
+        }
+
+        function guardarEstadoLocal() {
+            localStorage.setItem('entregasSena', JSON.stringify(entregasPorEstudiante));
+            localStorage.setItem('apelacionesSena', JSON.stringify(apelacionesPorEstudiante));
+        }
+
+        resetearEntregas();
+
+        // Nodos del DOM
+        const tarjetasContainer = document.getElementById('tarjetas-aprendices-container');
+        const selectorEstudiantes = document.getElementById('selector-estudiantes');
+        const dashNombreEstudiante = document.getElementById('dash-nombre-estudiante');
+        const dashDocumentoEstudiante = document.getElementById('dash-documento-estudiante');
+        const contenedorPendientes = document.getElementById('contenedor-pendientes');
+        const tablaCuerpo = document.getElementById('lista-evidencias-tabla');
+        const indicadorTotal = document.getElementById('total-indicador');
+        const tablaApelacionesCuerpo = document.getElementById('tabla-apelaciones-cuerpo');
+        const contadorApelacionesTotal = document.getElementById('contador-apelaciones-total');
+
+        // 🔐 CONTROL DE AUTENTICACIÓN Y ROLES
+        function ejecutarAutenticacion() {
+            const usuario = document.getElementById('login-usuario').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value.trim().toLowerCase();
+            
+            if (usuario === "admin" && password === "1234") {
+                sesionActiva = { autenticado: true, rol: "profesor", documento: "admin" };
+            } else if (usuario === "sena2026" && password === "sena2026") {
+                sesionActiva = { autenticado: true, rol: "aprendiz", documento: "sena2026" };
+            } else {
+                alert("Credenciales inválidas.");
+                return;
+            }
+
+            document.getElementById('pantalla-login').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            
+            configurarVisibilidadPorRol();
+            construirSelectorDashboard();
+            actualizarVentanaAprendices();
+            cargarTablaMallaOficial();
+            generarConsolidadoApelaciones();
+        }
+
+        function configurarVisibilidadPorRol() {
+            const avatar = document.getElementById('avatar-rol');
+            
+            if (sesionActiva.rol === "profesor") {
+                avatar.textContent = "INS";
+                avatar.className = "w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-black uppercase";
+                
+                document.querySelectorAll('.role-restricted').forEach(el => el.classList.remove('hidden'));
+                document.getElementById('aprendices-subtitulo').textContent = "Cruza las guías habilitadas globales vs las entregadas (\"A\"). Permite reportar y hacer seguimiento a las apelaciones.";
+                document.getElementById('guias-subtitulo').textContent = "Habilite de forma manual o cargue un listado masivo en texto plano (`.txt`).";
+                document.getElementById('apelaciones-subtitulo').textContent = "Consolidado en tiempo real. Permite cambiar el estado a Solucionado o Escalado de forma inmediata.";
+            } else {
+                avatar.textContent = "APR";
+                avatar.className = "w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center font-bold text-black uppercase";
+                
+                // Oculta todos los elementos de rol restrictivo (incluye el botón de menú y la propia sección del Dashboard)
+                document.querySelectorAll('.role-restricted').forEach(el => el.classList.add('hidden'));
+                document.getElementById('aprendices-subtitulo').textContent = "Visualización de su hoja de control personal y radicación de novedades.";
+                document.getElementById('guias-subtitulo').textContent = "Estado de visualización global de guías curriculares del programa ADSO.";
+                document.getElementById('apelaciones-subtitulo').textContent = "Historial de resoluciones aplicadas a sus reclamaciones radicadas.";
+            }
+        }
+
+        function cerrarSesion() {
+            sesionActiva = { autenticado: false, rol: "", documento: "" };
+            document.getElementById('login-usuario').value = "";
+            document.getElementById('pantalla-login').classList.remove('hidden');
+            document.getElementById('app-content').classList.add('hidden');
+            conmutarVentana('window-aprendices', document.getElementById('nav-aprendices'));
+        }
+
+        // 🔄 INTERRUPTOR DE VISTAS (NAVEGACIÓN)
+        function conmutarVentana(idVentanaDestino, botonPulsado) {
+            // Protección de seguridad adicional en código: si es un aprendiz e intenta forzar la ventana del dashboard, aborta.
+            if (sesionActiva.rol === "aprendiz" && idVentanaDestino === "window-dashboard") {
+                conmutarVentana('window-aprendices', document.getElementById('nav-aprendices'));
+                return;
+            }
+
+            document.querySelectorAll('.window-pane').forEach(sec => sec.classList.add('hidden'));
+            botonPulsado.parentElement.querySelectorAll('button').forEach(btn => {
+                btn.className = "w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all";
+            });
+            document.getElementById(idVentanaDestino).classList.remove('hidden');
+            botonPulsado.className = "w-full flex items-center gap-3 text-white bg-emerald-500 px-4 py-3 rounded-lg font-semibold transition-all";
+
+            if(idVentanaDestino === 'window-apelaciones') generarConsolidadoApelaciones();
+        }
+
+        // 📇 VENTANA 1: RENDER DE APRENDICES (OPCIONES LIMITADAS PARA EL APRENDIZ)
+        function actualizarVentanaAprendices() {
+            tarjetasContainer.innerHTML = '';
+            
+            const listaFiltrada = (sesionActiva.rol === "profesor" || sesionActiva.documento === "sena2026")
+                ? LISTADO_ESTUDIANTES_PROTEGIDO 
+                : LISTADO_ESTUDIANTES_PROTEGIDO.filter(e => e.documento === sesionActiva.documento);
+
+            listaFiltrada.forEach((estudiante, index) => {
+                const doc = estudiante.documento;
+                const tipoDoc = doc.slice(-2).toUpperCase();
+                const numDoc = doc.slice(0, -2);
+                
+                let entregadas = 0;
+                let faltantes = 0;
+                let listaGuiasPendientesHTML = '';
+
+                LISTADO_OFICIAL_PROTEGIDO.forEach(g => {
+                    if (estadoMallaGlobal[g.id] === true) {
+                        if (entregasPorEstudiante[doc] && entregasPorEstudiante[doc][g.id] === true) {
+                            entregadas++;
+                        } else {
+                            faltantes++;
+                            
+                            const apelacionActual = (apelacionesPorEstudiante[doc] && apelacionesPorEstudiante[doc][g.id]) || "NINGUNA";
+                            let controlNovedadHTML = '';
+
+                            if (sesionActiva.rol === "aprendiz" && (apelacionActual === "SOLUCIONADO" || apelacionActual === "ESCALADO")) {
+                                let badgeEstilo = apelacionActual === "SOLUCIONADO" ? "bg-teal-950 text-teal-400 border-teal-500/40" : "bg-cyan-950 text-cyan-400 border-cyan-500/40";
+                                controlNovedadHTML = `<span class="text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${badgeEstilo}">${apelacionActual}</span>`;
+                            } else {
+                                let selectColorStyle = "bg-[#0b1329] text-slate-300 border-[#3a506b]/50";
+                                if (apelacionActual === "ENTREGADO") selectColorStyle = "bg-emerald-950 text-emerald-400 border-emerald-500/50";
+                                if (apelacionActual === "NO_HABILITADO") selectColorStyle = "bg-slate-800 text-slate-400 border-slate-500/50";
+                                if (apelacionActual === "SEGUNDO_INTENTO") selectColorStyle = "bg-amber-950 text-amber-400 border-amber-500/50";
+                                if (apelacionActual === "SOLUCIONADO") selectColorStyle = "bg-teal-950 text-teal-400 border-teal-500/50 font-bold";
+                                if (apelacionActual === "ESCALADO") selectColorStyle = "bg-cyan-950 text-cyan-400 border-cyan-500/50 font-bold";
+
+                                let opcionesVisiblesHTML = `
+                                    <option value="NINGUNA" ${apelacionActual === 'NINGUNA' ? 'selected' : ''}>Sin reporte</option>
+                                    <option value="ENTREGADO" ${apelacionActual === 'ENTREGADO' ? 'selected' : ''}>Entregado Pendiente por Calificar</option>
+                                    <option value="NO_HABILITADO" ${apelacionActual === 'NO_HABILITADO' ? 'selected' : ''}>No Habilitado</option>
+                                    <option value="SEGUNDO_INTENTO" ${apelacionActual === 'SEGUNDO_INTENTO' ? 'selected' : ''}>2do Intento Corrección</option>
+                                `;
+
+                                if (sesionActiva.rol === "profesor") {
+                                    opcionesVisiblesHTML += `
+                                        <option value="SOLUCIONADO" ${apelacionActual === 'SOLUCIONADO' ? 'selected' : ''}>✅ Solucionado</option>
+                                        <option value="ESCALADO" ${apelacionActual === 'ESCALADO' ? 'selected' : ''}>🚀 Escalado</option>
+                                    `;
+                                }
+
+                                controlNovedadHTML = `
+                                    <select onchange="cambiarApelacionDesdeFalta('${doc}', '${g.id}', this.value)" class="text-[10px] font-semibold rounded px-1.5 py-0.5 outline-none cursor-pointer border ${selectColorStyle} transition-colors">
+                                        ${opcionesVisiblesHTML}
+                                    </select>`;
+                            }
+
+                            listaGuiasPendientesHTML += `
+                                <div class="p-2 bg-[#0b1329] border border-rose-500/20 rounded text-xs flex flex-col gap-2">
+                                    <div>
+                                        <p class="font-mono text-[10px] text-rose-400 font-bold">${g.id}</p>
+                                        <p class="text-slate-300 font-medium leading-tight">${g.nombre}</p>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2 bg-[#0b1329]/60 p-1.5 rounded border border-[#3a506b]/30">
+                                        <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400"><i class="fa-solid fa-bell text-amber-500"></i> Novedad:</span>
+                                        ${controlNovedadHTML}
+                                    </div>
+                                </div>`;
+                        }
+                    }
+                });
+                
+                let novedadesTexto = "✨ Al día";
+                let novedadesEstilo = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+
+                if (faltantes > 0) {
+                    novedadesTexto = `⚠️ ${faltantes} Faltantes`;
+                    novedadesEstilo = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+                }
+
+                if (listaGuiasPendientesHTML === '') {
+                    listaGuiasPendientesHTML = `<p class="text-xs text-center text-emerald-400 font-medium py-2">🎉 ¡Al día con todas las guías habilitadas!</p>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-[#1c2541] border border-[#3a506b]/50 p-5 rounded-xl flex flex-col justify-between hover:border-[#3a506b] transition-all shadow-lg space-y-4";
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-full bg-[#0b1329] border border-[#3a506b] flex items-center justify-center font-bold text-emerald-400 text-xs shrink-0">
+                            ${String(index + 1).padStart(2, '0')}
+                        </div>
+                        <div class="truncate">
+                            <h4 class="text-sm font-bold text-white truncate leading-tight">${estudiante.apellidos}</h4>
+                            <p class="text-xs text-slate-300 truncate mt-0.5">${estudiante.nombres}</p>
+                            <span class="text-[9px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 font-bold border border-[#3a506b]/40 mt-1 inline-block">
+                                ${tipoDoc}: ${numDoc}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 border-t border-b border-[#3a506b]/40 py-3 text-center">
+                        <div class="bg-[#0b1329]/50 rounded-lg p-2 border border-[#3a506b]/20">
+                            <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Aprobadas</span>
+                            <span class="text-base font-extrabold text-emerald-400">${entregadas}</span>
+                        </div>
+                        <div onclick="conmutarAcordeonPendientes('${doc}')" class="bg-[#0b1329]/50 hover:bg-amber-500/5 hover:border-amber-500/30 rounded-lg p-2 border border-[#3a506b]/20 cursor-pointer group transition-all relative">
+                            <span class="text-[10px] uppercase font-semibold text-slate-400 group-hover:text-amber-400 block tracking-wider transition-colors flex items-center justify-center gap-1">
+                                Faltantes <i class="fa-solid fa-chevron-down text-[9px] mt-0.5"></i>
+                            </span>
+                            <span class="text-base font-extrabold ${faltantes > 0 ? 'text-amber-400' : 'text-slate-500'}">${faltantes}</span>
+                        </div>
+                    </div>
+
+                    <div id="acordeon-${doc}" class="hidden bg-[#0b1329]/30 border border-[#3a506b]/30 rounded-lg p-3 space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1"><i class="fa-solid fa-list-ul text-emerald-500 mr-1"></i> Estado de Guías:</p>
+                        ${listaGuiasPendientesHTML}
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-1">
+                        <span class="text-slate-400 font-medium">Estado:</span>
+                        <span class="px-2.5 py-1 rounded-md font-bold border text-[11px] font-mono tracking-wide ${novedadesEstilo}">
+                            ${novedadesTexto}
+                        </span>
+                    </div>`;
+                tarjetasContainer.appendChild(card);
+            });
+        }
+
+        function conmutarAcordeonPendientes(documentoId) {
+            document.getElementById(`acordeon-${documentoId}`).classList.toggle('hidden');
+        }
+
+        function cambiarApelacionDesdeFalta(documento, guiaId, valor) {
+            if(apelacionesPorEstudiante[documento]) {
+                apelacionesPorEstudiante[documento][guiaId] = valor;
+                guardarAprobacionEnExcel(documento, guiaId, valor);
+                guardarEstadoLocal();
+                actualizarVentanaAprendices();
+                document.getElementById(`acordeon-${documento}`).classList.remove('hidden');
+                generarConsolidadoApelaciones();
+            }
+        }
+
+        // ⚖️ VENTANA 4: REPORTE DE APELACIONES
+        function generarConsolidadoApelaciones() {
+            tablaApelacionesCuerpo.innerHTML = '';
+            let contadorCasos = 0;
+
+            LISTADO_ESTUDIANTES_PROTEGIDO.forEach(estudiante => {
+                const doc = estudiante.documento;
+                
+                if (sesionActiva.rol === "aprendiz" && sesionActiva.documento !== "sena2026" && sesionActiva.documento !== doc) return;
+
+                LISTADO_OFICIAL_PROTEGIDO.forEach(g => {
+                    if (estadoMallaGlobal[g.id] === true && entregasPorEstudiante[doc][g.id] === false) {
+                        const apelacion = apelacionesPorEstudiante[doc][g.id];
+                        
+                        if (apelacion && apelacion !== "NINGUNA") {
+                            contadorCasos++;
+                            let celdaGestionHTML = '';
+
+                            if (sesionActiva.rol === "profesor") {
+                                let selectColorStyle = "bg-[#0b1329] border-[#3a506b]/70 ";
+                                if (apelacion === "ENTREGADO") selectColorStyle += "text-emerald-400 border-emerald-500/30 bg-emerald-950/20";
+                                if (apelacion === "NO_HABILITADO") selectColorStyle += "text-slate-400 border-slate-500/40 bg-slate-900";
+                                if (apelacion === "SEGUNDO_INTENTO") selectColorStyle += "text-amber-400 border-amber-500/30 bg-amber-950/20";
+                                if (apelacion === "SOLUCIONADO") selectColorStyle += "text-teal-400 border-teal-500/40 bg-teal-950/40 font-bold";
+                                if (apelacion === "ESCALADO") selectColorStyle += "text-cyan-400 border-cyan-500/40 bg-cyan-950/40 font-bold";
+
+                                celdaGestionHTML = `
+                                    <select onchange="cambiarApelacionDesdeReporte('${doc}', '${g.id}', this.value)" class="text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer border ${selectColorStyle} transition-all w-56 text-center">
+                                        <option value="ENTREGADO" ${apelacion === 'ENTREGADO' ? 'selected' : ''}>Entregado Pendiente por Calificar</option>
+                                        <option value="NO_HABILITADO" ${apelacion === 'NO_HABILITADO' ? 'selected' : ''}>No Habilitado</option>
+                                        <option value="SEGUNDO_INTENTO" ${apelacion === 'SEGUNDO_INTENTO' ? 'selected' : ''}>2do Intento Corrección</option>
+                                        <option value="SOLUCIONADO" ${apelacion === 'SOLUCIONADO' ? 'selected' : ''}>✅ Solucionado</option>
+                                        <option value="ESCALADO" ${apelacion === 'ESCALADO' ? 'selected' : ''}>🚀 Escalado</option>
+                                        <option value="NINGUNA">❌ Remover de esta lista</option>
+                                    </select>`;
+                            } else {
+                                let badgeStyle = "bg-slate-900 text-slate-300 border-slate-700";
+                                if (apelacion === "ENTREGADO") badgeStyle = "bg-emerald-950/60 text-emerald-400 border-emerald-500/30";
+                                if (apelacion === "SEGUNDO_INTENTO") badgeStyle = "bg-amber-950/60 text-amber-400 border-amber-500/30";
+                                if (apelacion === "SOLUCIONADO") badgeStyle = "bg-teal-950 text-teal-400 border-teal-500/40 font-bold";
+                                if (apelacion === "ESCALADO") badgeStyle = "bg-cyan-950 text-cyan-400 border-cyan-500/40 font-bold";
+
+                                celdaGestionHTML = `<span class="px-3 py-1.5 border rounded-lg text-xs font-semibold ${badgeStyle}">${apelacion}</span>`;
+                            }
+
+                            const tr = document.createElement('tr');
+                            tr.className = "border-b border-[#3a506b]/20 hover:bg-[#1c2541]/30 transition-colors";
+                            tr.innerHTML = `
+                                <td class="p-4 font-mono text-xs text-slate-400 uppercase select-all">${doc.toUpperCase()}</td>
+                                <td class="p-4">
+                                    <div class="font-bold text-white text-xs">${estudiante.apellidos}</div>
+                                    <div class="text-slate-400 text-[11px]">${estudiante.nombres}</div>
+                                </td>
+                                <td class="p-4 font-mono text-xs text-amber-400 font-bold select-all">${g.id}</td>
+                                <td class="p-4 text-xs text-slate-300 font-medium max-w-xs truncate" title="${g.nombre}">${g.nombre}</td>
+                                <td class="p-4 text-center">${celdaGestionHTML}</td>`;
+                            tablaApelacionesCuerpo.appendChild(tr);
+                        }
+                    }
+                });
+            });
+
+            contadorApelacionesTotal.textContent = `${contadorCasos} Caso(s) Detectado(s)`;
+            
+            if (contadorCasos === 0) {
+                tablaApelacionesCuerpo.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-sm text-slate-500 font-medium">
+                            <i class="fa-solid fa-folder-open block text-xl mb-2 text-slate-600"></i> No se registran novedades ni apelaciones pendientes.
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function cambiarApelacionDesdeReporte(documento, guiaId, nuevoEstado) {
+            if(apelacionesPorEstudiante[documento]) {
+                apelacionesPorEstudiante[documento][guiaId] = nuevoEstado;
+                guardarAprobacionEnExcel(documento, guiaId, nuevoEstado);
+                guardarEstadoLocal();
+                generarConsolidadoApelaciones();
+                actualizarVentanaAprendices();
+            }
+        }
+
+        // 📄 MOTOR CSV
+        function procesarArchivoCsv() {
+            const inputArchivo = document.getElementById('archivo-csv-entregas');
+            if (!inputArchivo.files || inputArchivo.files.length === 0) {
+                alert("Por favor, seleccione un archivo .csv primero.");
+                return;
+            }
+
+            const archivo = inputArchivo.files[0];
+            const lector = new FileReader();
+
+            lector.onload = function(evento) {
+                const contenido = evento.target.result;
+                const lineas = contenido.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+                if(lineas.length <= 1) {
+                    alert("El archivo no contiene filas válidas.");
+                    return;
+                }
+
+                const separador = lineas[0].includes(';') ? ';' : ',';
+                const cabeceras = lineas[0].split(separador).map(c => c.replace(/"/g, '').trim());
+                const indiceCedula = cabeceras.findIndex(c => c.toUpperCase() === 'CEDULA');
+
+                if (indiceCedula === -1) {
+                    alert("No se encontró la columna 'CEDULA' en la cabecera del archivo.");
+                    return;
+                }
+
+                resetearEntregas();
+
+                for (let i = 1; i < lineas.length; i++) {
+                    const columns = lineas[i].split(separador).map(col => col.replace(/"/g, '').trim());
+                    if (columns.length <= indiceCedula) continue;
+
+                    const documento = columns[indiceCedula].toLowerCase();
+
+                    if (entregasPorEstudiante.hasOwnProperty(documento)) {
+                        for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+                            const posibleGuiaId = cabeceras[colIdx];
+                            const calificacion = columns[colIdx].toUpperCase();
+
+                            if (posibleGuiaId && LISTADO_OFICIAL_PROTEGIDO.some(act => act.id === posibleGuiaId)) {
+                                if (calificacion === 'A') {
+                                    entregasPorEstudiante[documento][posibleGuiaId] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                actualizarVentanaAprendices();
+                renderizarDashboardPendientes();
+                generarConsolidadoApelaciones();
+                guardarEstadoLocal();
+
+                alert(`✅ Reporte structured con éxito.\nLas celdas vacías o con 'D' quedan listas para auditoría.`);
+                inputArchivo.value = '';
+            };
+
+            lector.readAsText(archivo);
+        }
+
+        // 📊 VENTANA 2: CONTRALOR INDIVIDUAL
+        function construirSelectorDashboard() {
+            if(!selectorEstudiantes) return;
+            selectorEstudiantes.innerHTML = '';
+            LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.documento;
+                opt.textContent = `${e.apellidos} ${e.nombres}`;
+                selectorEstudiantes.appendChild(opt);
+            });
+            if(LISTADO_ESTUDIANTES_PROTEGIDO.length > 0) {
+                cambiarEstudianteActivo(LISTADO_ESTUDIANTES_PROTEGIDO[0].documento);
+            }
+        }
+
+        function cambiarEstudianteActivo(documento) {
+            const e = LISTADO_ESTUDIANTES_PROTEGIDO.find(est => est.documento === documento);
+            if (e) {
+                dashNombreEstudiante.textContent = `${e.nombres} ${e.apellidos}`;
+                dashDocumentoEstudiante.textContent = `DOCUMENTO DE IDENTIDAD: ${e.documento.toUpperCase()}`;
+                renderizarDashboardPendientes();
+            }
+        }
+
+        function renderizarDashboardPendientes() {
+            if(!contenedorPendientes) return;
+            contenedorPendientes.innerHTML = '';
+            const doc = selectorEstudiantes.value;
+            const guiasHabilitadas = LISTADO_OFICIAL_PROTEGIDO.filter(act => estadoMallaGlobal[act.id] === true);
+            
+            if (guiasHabilitadas.length === 0) {
+                contenedorPendientes.innerHTML = `
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-xl text-center shadow-inner w-full">
+                        <p class="text-sm text-emerald-400 font-medium">✨ Ninguna guía activa habilitada en la Malla de Control global.</p>
+                    </div>`;
+                return;
+            }
+
+            guiasHabilitadas.forEach(act => {
+                const yaEntregado = entregasPorEstudiante[doc] ? entregasPorEstudiante[doc][act.id] : false;
+                const card = document.createElement('div');
+                card.className = `border p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${yaEntregado ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-[#1c2541] border-[#3a506b]/50 hover:border-amber-500/30'}`;
+                
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        ${yaEntregado 
+                            ? `<span class="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-bold rounded uppercase tracking-wider"><i class="fa-solid fa-check mr-1"></i> Aprobado (A)</span>`
+                            : `<span class="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[10px] font-bold rounded uppercase tracking-wider"><i class="fa-regular fa-clock mr-1"></i> Por Gestionar</span>`
+                        }
+                        <h4 class="text-slate-200 font-semibold text-sm pt-1">${act.nombre}</h4>
+                        <p class="text-xs font-mono ${yaEntregado ? 'text-slate-500' : 'text-emerald-400'}">${act.id}</p>
+                    </div>
+                    <div class="shrink-0 flex items-center justify-end">
+                        <label class="relative inline-flex items-center cursor-pointer justify-center">
+                            <span class="text-xs text-slate-400 mr-3 font-semibold">${yaEntregado ? 'Aprobado' : 'Aprobar Manual'}</span>
+                            <input type="checkbox" class="sr-only peer" ${yaEntregado ? 'checked' : ''} onchange="marcarEntregaEstudiante('${doc}', '${act.id}', this.checked)">
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[22px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>`;
+                contenedorPendientes.appendChild(card);
+            });
+        }
+
+        function marcarEntregaEstudiante(documento, idEvidencia, entregado) {
+            if(entregasPorEstudiante[documento]) {
+                entregasPorEstudiante[documento][idEvidencia] = entregado;
+                if (entregado) apelacionesPorEstudiante[documento][idEvidencia] = "NINGUNA";
+                guardarAprobacionEnExcel(documento, idEvidencia, entregado ? "APROBADO" : "PENDIENTE");
+                guardarEstadoLocal();
+                renderizarDashboardPendientes();
+                actualizarVentanaAprendices();
+                generarConsolidadoApelaciones();
+            }
+        }
+
+        // ⚙️ VENTANA 3: FILTRO MAESTRO DE CONTROL GLOBAL
+        function cargarTablaMallaOficial() {
+            tablaCuerpo.innerHTML = '';
+            LISTADO_OFICIAL_PROTEGIDO.forEach((actividad) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-[#3a506b]/30 hover:bg-[#1c2541]/40 transition-colors";
+                const checkStatus = estadoMallaGlobal[actividad.id] ? 'checked' : '';
+
+                const controlCheckboxHTML = sesionActiva.rol === "profesor"
+                    ? `<label class="relative inline-flex items-center cursor-pointer justify-center">
+                            <input type="checkbox" class="sr-only peer" ${checkStatus} onchange="cambiarMallaGlobal('${actividad.id}', this.checked)">
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                       </label>`
+                    : `<input type="checkbox" ${checkStatus} disabled class="w-4 h-4 accent-slate-500 opacity-40 cursor-not-allowed">`;
+
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-xs text-emerald-400 font-semibold select-all">${actividad.id}</td>
+                    <td class="p-4 text-slate-200 font-medium">${actividad.nombre}</td>
+                    <td class="p-4 text-center">${controlCheckboxHTML}</td>`;
+                tablaCuerpo.appendChild(tr);
+            });
+            actualizarContadores();
+        }
+
+        function procesarArchivoTxt() {
+            const inputArchivo = document.getElementById('archivo-txt-guias');
+            if (!inputArchivo.files || inputArchivo.files.length === 0) {
+                alert("Por favor, seleccione primero un archivo .txt válido.");
+                return;
+            }
+
+            const archivo = inputArchivo.files[0];
+            const lector = new FileReader();
+
+            lector.onload = function(evento) {
+                const contenido = evento.target.result;
+                const lineasIds = contenido.split('\n').map(linea => linea.trim()).filter(linea => linea.length > 0);
+
+                LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false);
+
+                lineasIds.forEach(idIngresado => {
+                    if (estadoMallaGlobal.hasOwnProperty(idIngresado)) {
+                        estadoMallaGlobal[idIngresado] = true;
+                    }
+                });
+
+                cargarTablaMallaOficial();
+                renderizarDashboardPendientes();
+                actualizarVentanaAprendices();
+                generarConsolidadoApelaciones();
+
+                alert("🎯 Malla oficial filtrada por demanda masiva con éxito.");
+                inputArchivo.value = '';
+            };
+
+            lector.readAsText(archivo);
+        }
+
+        function cambiarMallaGlobal(idEvidencia, isChecked) {
+            estadoMallaGlobal[idEvidencia] = isChecked;
+            actualizarContadores();
+            renderizarDashboardPendientes();
+            actualizarVentanaAprendices();
+            generarConsolidadoApelaciones();
+        }
+
+        function actualizarContadores() {
+            const totalActivas = Object.values(estadoMallaGlobal).filter(Boolean).length;
+            indicadorTotal.textContent = `${totalActivas} Habilitadas`;
+        }
+
+        function guardarCambiosMalla() {
+            const notif = document.getElementById('notificacion-guardado');
+            notif.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => notif.classList.replace('opacity-100', 'opacity-0'), 3000);
+        }
+        // ================== LÓGICA FIREBASE REALTIME DATABASE ==================
+        const firebaseConfig = {
+          apiKey: "AIzaSyDILWc10M0zdseO8oW_9Q10g9R2Excwt1w",
+          authDomain: "sena-taskmanager-2026.firebaseapp.com",
+          databaseURL: "https://sena-taskmanager-2026-default-rtdb.firebaseio.com",
+          projectId: "sena-taskmanager-2026",
+          storageBucket: "sena-taskmanager-2026.firebasestorage.app",
+          messagingSenderId: "96724724099",
+          appId: "1:96724724099:web:18d1cee2630354295a2eb6",
+          measurementId: "G-K9C0Q8ZCS9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let videosGlobales = [];
+
+        // Leer caché local inicialmente para no mostrar vacío
+        const videosCache = localStorage.getItem('videosCacheSena');
+        if (videosCache) {
+            try { videosGlobales = JSON.parse(videosCache); renderizarVideos(); actualizarDatalistInstructores(); } catch (e) {}
+        }
+
+        // --- SINCRONIZACIÓN DE VIDEOS ---
+        database.ref('videos').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                videosGlobales = Object.values(data);
+                localStorage.setItem('videosCacheSena', JSON.stringify(videosGlobales));
+                actualizarDatalistInstructores();
+                renderizarVideos();
+            }
+        });
+
+        function actualizarDatalistInstructores() {
+            const datalist = document.getElementById('lista-instructores');
+            if (!datalist) return;
+            const instructoresUnicos = [...new Set(videosGlobales.map(v => v.instructor))].filter(Boolean);
+            datalist.innerHTML = instructoresUnicos.map(inst => `<option value="${inst}">`).join('');
+        }
+
+        function subirNuevoVideo() {
+            const t = document.getElementById('v-titulo').value.trim();
+            const u = document.getElementById('v-url').value.trim();
+            const i = document.getElementById('v-instructor').value.trim();
+            
+            if (!t || !u || !i) return alert("Completa todos los campos");
+            
+            database.ref('videos').push({ titulo: t, url: u, instructor: i }).then(() => {
+                document.getElementById('v-titulo').value = '';
+                document.getElementById('v-url').value = '';
+                document.getElementById('v-instructor').value = '';
+                alert("¡Video guardado en la Nube!");
+            }).catch(e => {
+                console.error(e); alert("Error al subir el video a Firebase.");
+            });
+        }
+
+        function renderizarVideos() {
+            const contenedor = document.getElementById('contenedor-videos-ui');
+            if (videosGlobales.length === 0) {
+                contenedor.innerHTML = `<p class="text-slate-400 text-sm text-center col-span-full py-10">Esperando conexión a la Nube...</p>`;
+                return;
+            }
+            
+            const agrupar = videosGlobales.reduce((acc, v) => {
+                if (!acc[v.instructor]) acc[v.instructor] = [];
+                acc[v.instructor].push(v);
+                return acc;
+            }, {});
+            
+            let html = '';
+            for (const inst in agrupar) {
+                html += `<div class="col-span-full mb-1 mt-5 bg-emerald-500/10 border-l-4 border-emerald-500 p-2 text-emerald-400 font-bold rounded-r text-sm uppercase tracking-wider"><i class="fa-solid fa-chalkboard-user"></i> Instructor: ${inst}</div>`;
+                
+                agrupar[inst].sort((a, b) => {
+                    const getD = t => {
+                        const m = t.match(/(\d{2})-(\d{2})-(\d{2})/);
+                        return m ? new Date(`20${m[3]}`, m[2]-1, m[1]) : new Date(0);
+                    };
+                    return getD(b.titulo) - getD(a.titulo);
+                });
+                
+                agrupar[inst].forEach(v => {
+                    html += `
+                        <div class="bg-[#1c2541] border border-[#3a506b] hover:border-emerald-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg transition-all group">
+                            <h4 class="text-sm font-bold text-white mb-4 group-hover:text-emerald-400 transition-colors" style="min-height: 2.5rem">${v.titulo}</h4>
+                            <a href="${v.url}" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-center transition-all text-xs flex items-center justify-center gap-2">
+                                <i class="fa-brands fa-youtube text-lg"></i> Ver Grabación
+                            </a>
+                        </div>
+                    `;
+                });
+            }
+            contenedor.innerHTML = html;
+        }
+
+        // --- SINCRONIZACIÓN DE APROBACIONES ---
+        database.ref('aprobaciones').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // Aplicar el historial de aprobaciones en orden cronológico
+                Object.values(data).forEach(row => {
+                    const doc = row.documento;
+                    const guia = row.guiaId;
+                    const estado = row.estado;
+                    
+                    if (doc && guia) {
+                        if (estado === "APROBADO") {
+                            if (entregasPorEstudiante[doc]) entregasPorEstudiante[doc][guia] = true;
+                            if (apelacionesPorEstudiante[doc]) apelacionesPorEstudiante[doc][guia] = "NINGUNA";
+                        } else if (estado === "PENDIENTE") {
+                            if (entregasPorEstudiante[doc]) entregasPorEstudiante[doc][guia] = false;
+                        } else {
+                            if (apelacionesPorEstudiante[doc]) apelacionesPorEstudiante[doc][guia] = estado;
+                        }
+                    }
+                });
+                
+                guardarEstadoLocal();
+                actualizarVentanaAprendices();
+                generarConsolidadoApelaciones();
+                if(!document.getElementById('window-dashboard').classList.contains('hidden')) renderizarDashboardPendientes();
+            }
+        });
+
+        function guardarAprobacionEnExcel(documento, guiaId, estado) {
+            // Mantengo el nombre para no romper otras funciones, pero ahora sincroniza con Firebase
+            const estudiante = LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento === documento);
+            const nombre = estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Desconocido";
+            const fecha = new Date().toLocaleString();
+            
+            database.ref('aprobaciones').push({
+                documento: documento,
+                nombre: nombre,
+                guiaId: guiaId,
+                estado: estado,
+                fecha: fecha
+            }).then(() => {
+                const n = document.createElement('div');
+                n.className = "fixed bottom-4 left-4 bg-emerald-500/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] font-bold text-xs z-50 transition-all duration-300 transform translate-y-0";
+                n.innerHTML = `<i class="fa-solid fa-cloud-check mr-2"></i> Estado '${estado}' guardado en Nube`;
+                document.body.appendChild(n);
+                setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateY(10px)'; setTimeout(()=>n.remove(),300); }, 2000);
+            }).catch(e => console.error("Error Firebase:", e));
+        }
+
+    </script>
+</body>
+</html>
