@@ -1357,7 +1357,8 @@
         function actualizarDatalistInstructores() {
             const datalist = document.getElementById('lista-instructores');
             if (!datalist) return;
-            const instructoresUnicos = [...new Set(videosGlobales.map(v => v.instructor))].filter(Boolean);
+            const instructoresBase = ["Carlos Andrés Lemus Guerra", "Adonay Sánchez"];
+            const instructoresUnicos = [...new Set([...instructoresBase, ...videosGlobales.map(v => v.instructor)])].filter(Boolean);
             datalist.innerHTML = instructoresUnicos.map(inst => `<option value="${inst}">`).join('');
         }
 
