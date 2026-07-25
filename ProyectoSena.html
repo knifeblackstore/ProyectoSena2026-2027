@@ -77,7 +77,7 @@
                     <button id="nav-aprendices" onclick="conmutarVentana('window-aprendices', this)" class="w-full flex items-center gap-3 text-white bg-emerald-500 px-4 py-3 rounded-lg font-semibold transition-all">
                         <i class="fa-solid fa-address-book"></i> Ventana Aprendices
                     </button>
-                    <button id="nav-dashboard" onclick="conmutarVentana('window-dashboard', this)" class="role-restricted w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
+                    <button id="nav-dashboard" onclick="conmutarVentana('window-dashboard', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
                         <i class="fa-solid fa-chart-pie"></i> Dashboard Individual
                     </button>
                     <button id="nav-guias" onclick="conmutarVentana('window-guias', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
@@ -138,7 +138,7 @@
                     </div>
             </section>
 
-            <section id="window-dashboard" class="window-pane role-restricted space-y-6 hidden">
+            <section id="window-dashboard" class="window-pane space-y-6 hidden">
                 <header class="border-b border-[#3a506b] pb-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
@@ -777,18 +777,29 @@
 
         // 🔄 INTERRUPTOR DE VISTAS (NAVEGACIÓN)
         function conmutarVentana(idVentanaDestino, botonPulsado) {
-            // Protección de seguridad adicional en código: si es un aprendiz e intenta forzar la ventana del dashboard, aborta.
-            if (sesionActiva.rol === "aprendiz" && idVentanaDestino === "window-dashboard") {
+            // Protección de seguridad adicional en código: si es un aprendiz e intenta forzar la ventana del dashboard o usuarios, aborta.
+            if (sesionActiva.rol === "aprendiz" && (idVentanaDestino === "window-dashboard" || idVentanaDestino === "window-usuarios" || idVentanaDestino === "window-guias")) {
                 conmutarVentana('window-aprendices', document.getElementById('nav-aprendices'));
                 return;
             }
 
             document.querySelectorAll('.window-pane').forEach(sec => sec.classList.add('hidden'));
+            
+            // Restablecer estilos de todos los botones sin borrar sus clases originales (como hidden o role-restricted)
             botonPulsado.parentElement.querySelectorAll('button').forEach(btn => {
-                btn.className = "w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all";
+                btn.classList.remove('text-white', 'bg-emerald-500');
+                btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-[#3a506b]/40');
             });
+            
             document.getElementById(idVentanaDestino).classList.remove('hidden');
-            botonPulsado.className = "w-full flex items-center gap-3 text-white bg-emerald-500 px-4 py-3 rounded-lg font-semibold transition-all";
+            
+            // Aplicar estilo activo al botón seleccionado
+            botonPulsado.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-[#3a506b]/40');
+            botonPulsado.classList.add('text-white', 'bg-emerald-500');
+            
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar-menu').classList.add('-translate-x-full');
+            }
 
             if(idVentanaDestino === 'window-apelaciones') generarConsolidadoApelaciones();
         }
