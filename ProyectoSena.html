@@ -1083,8 +1083,8 @@
                 if (sesionActiva.rol === "aprendiz" && sesionActiva.documento !== "sena2026" && sesionActiva.documento !== doc) return;
 
                 LISTADO_OFICIAL_PROTEGIDO.forEach(g => {
-                    if (estadoMallaGlobal[g.id] === true && entregasPorEstudiante[doc][g.id] === false) {
-                        const apelacion = apelacionesPorEstudiante[doc][g.id];
+                    if (estadoMallaGlobal[g.id] === true && (!entregasPorEstudiante[doc] || entregasPorEstudiante[doc][g.id] !== true)) {
+                        const apelacion = (apelacionesPorEstudiante[doc] && apelacionesPorEstudiante[doc][g.id]) ? apelacionesPorEstudiante[doc][g.id] : "NINGUNA";
                         
                         if (apelacion && apelacion !== "NINGUNA") {
                             contadorCasos++;
