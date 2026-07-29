@@ -103,7 +103,10 @@
                         <p id="total-indicador" class="text-xs text-slate-400">0 Habilitadas</p>
                     </div>
                 </div>
-                <button onclick="cerrarSesion()" class="w-full text-left text-xs text-rose-400 hover:text-rose-300 font-bold flex items-center gap-2 pt-2 border-t border-[#3a506b]/40">
+                <button onclick="cambiarClaveUsuario()" class="w-full text-left text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-2 pt-2 border-t border-[#3a506b]/40">
+                    <i class="fa-solid fa-key"></i> Cambiar Contraseña
+                </button>
+                <button onclick="cerrarSesion()" class="w-full text-left text-xs text-rose-400 hover:text-rose-300 font-bold flex items-center gap-2 pt-2 mt-2">
                     <i class="fa-solid fa-power-off"></i> Cerrar Sesión Activa
                 </button>
             </div>
@@ -156,18 +159,15 @@
                     </div>
                 </header>
 
-                <div class="bg-[#1c2541]/40 border border-[#3a506b]/50 p-4 rounded-xl flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-                            <i class="fa-solid fa-address-card text-xl"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] uppercase font-mono tracking-widest text-slate-400">Perfil en Enfoque</span>
-                            <h4 id="dash-nombre-estudiante" class="text-lg font-bold text-white leading-tight">Cargando...</h4>
-                            <p id="dash-documento-estudiante" class="text-xs font-mono text-emerald-400 mt-0.5">Doc: --</p>
-                        </div>
+                <div class="bg-[#1c2541]/40 border border-[#3a506b]/50 p-4 rounded-xl flex items-center gap-4">
+                    <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+                        <i class="fa-solid fa-address-card text-xl"></i>
                     </div>
-                    <button onclick="cambiarClaveUsuario()" class="text-[10px] bg-[#0b1329] hover:bg-[#3a506b] border border-[#3a506b] px-3 py-1.5 rounded-lg text-emerald-400 font-bold transition-colors uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-key"></i> Cambiar Clave</button>
+                    <div>
+                        <span class="text-[10px] uppercase font-mono tracking-widest text-slate-400">Perfil en Enfoque</span>
+                        <h4 id="dash-nombre-estudiante" class="text-lg font-bold text-white leading-tight">Seleccione un aprendiz...</h4>
+                        <p id="dash-documento-estudiante" class="text-xs font-mono text-emerald-400 mt-0.5">Doc: --</p>
+                    </div>
                 </div>
                 
                 <div class="space-y-4">
@@ -693,7 +693,7 @@
                         } else if (userData.password !== password) {
                             alert("Contraseña incorrecta.");
                         } else {
-                            iniciarSesionExitosa({ autenticado: true, rol: userData.rol || "aprendiz", documento: usuario });
+                            iniciarSesionExitosa({ autenticado: true, rol: userData.rol || "aprendiz", documento: usuario, nombres: userData.nombres, apellidos: userData.apellidos });
                         }
                     }
                 } catch(e) {
@@ -725,6 +725,22 @@
 
         function configurarVisibilidadPorRol() {
             const avatar = document.getElementById('avatar-rol');
+            const userDisplayName = document.getElementById('user-display-name');
+            
+            let nombreUsuario = "Desconocido";
+            if (sesionActiva.documento === "admin") {
+                nombreUsuario = "Administrador Global";
+            } else {
+                const est = LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase());
+                if (est) {
+                    nombreUsuario = `${est.nombres} ${est.apellidos}`;
+                } else if (sesionActiva.nombres && sesionActiva.apellidos) {
+                    nombreUsuario = `${sesionActiva.nombres} ${sesionActiva.apellidos}`;
+                } else {
+                    nombreUsuario = `Doc. ${sesionActiva.documento}`;
+                }
+            }
+            userDisplayName.textContent = nombreUsuario;
             
             if (sesionActiva.rol === "profesor") {
                 avatar.textContent = "ADM";
@@ -1207,15 +1223,23 @@
             if (sesionActiva.rol === 'profesor' || sesionActiva.rol === 'instructor') {
                 // Admin/Instructor: Ve a todos
                 selectorEstudiantes.disabled = false;
+                
+                const optDefault = document.createElement('option');
+                optDefault.value = "";
+                optDefault.textContent = "-- Seleccione un aprendiz --";
+                selectorEstudiantes.appendChild(optDefault);
+                
                 LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
                     const opt = document.createElement('option');
                     opt.value = e.documento;
                     opt.textContent = `${e.apellidos} ${e.nombres}`;
                     selectorEstudiantes.appendChild(opt);
                 });
-                if(LISTADO_ESTUDIANTES_PROTEGIDO.length > 0) {
-                    cambiarEstudianteActivo(LISTADO_ESTUDIANTES_PROTEGIDO[0].documento);
-                }
+                
+                // Reset dashboard
+                document.getElementById('dash-nombre-estudiante').textContent = "Seleccione un aprendiz...";
+                document.getElementById('dash-documento-estudiante').textContent = "Doc: --";
+                document.getElementById('tarjetas-dashboard-container').innerHTML = '';
             } else {
                 // Aprendiz: Solo ve el suyo
                 selectorEstudiantes.disabled = true;
