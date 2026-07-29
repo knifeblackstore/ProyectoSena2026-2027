@@ -878,8 +878,8 @@
 
         // 🔄 INTERRUPTOR DE VISTAS (NAVEGACIÓN)
         function conmutarVentana(idVentanaDestino, botonPulsado) {
-            // Protección de seguridad adicional en código: si es un aprendiz e intenta forzar la ventana del dashboard o usuarios, aborta.
-            if (sesionActiva.rol === "aprendiz" && (idVentanaDestino === "window-dashboard" || idVentanaDestino === "window-usuarios" || idVentanaDestino === "window-guias")) {
+            // Protección de seguridad adicional en código: si es un aprendiz e intenta forzar la ventana de usuarios o guias, aborta.
+            if (sesionActiva.rol === "aprendiz" && (idVentanaDestino === "window-usuarios" || idVentanaDestino === "window-guias")) {
                 conmutarVentana('window-aprendices', document.getElementById('nav-aprendices'));
                 return;
             }
