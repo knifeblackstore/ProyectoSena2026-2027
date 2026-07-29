@@ -80,7 +80,7 @@
                     <button id="nav-dashboard" onclick="conmutarVentana('window-dashboard', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
                         <i class="fa-solid fa-chart-pie"></i> Dashboard Individual
                     </button>
-                    <button id="nav-guias" onclick="conmutarVentana('window-guias', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
+                    <button id="nav-guias" onclick="conmutarVentana('window-guias', this)" class="admin-only hidden w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
                         <i class="fa-solid fa-toggle-on"></i> Control de Guías
                     </button>
                     <button id="nav-apelaciones" onclick="conmutarVentana('window-apelaciones', this)" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all border border-transparent hover:border-amber-500/20">
@@ -179,7 +179,7 @@
                 </div>
             </section>
 
-            <section id="window-guias" class="window-pane space-y-6 hidden">
+            <section id="window-guias" class="window-pane admin-only hidden space-y-6">
                 <header class="border-b border-[#3a506b] pb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                         <h2 class="text-3xl font-extrabold text-white">Control Maestro de Guías</h2>
@@ -897,8 +897,12 @@
 
         // 🔄 INTERRUPTOR DE VISTAS (NAVEGACIÓN)
         function conmutarVentana(idVentanaDestino, botonPulsado) {
-            // Protección de seguridad adicional en código: si es un aprendiz e intenta forzar la ventana de usuarios o guias, aborta.
+            // Protección de seguridad adicional
             if (sesionActiva.rol === "aprendiz" && (idVentanaDestino === "window-usuarios" || idVentanaDestino === "window-guias")) {
+                conmutarVentana('window-aprendices', document.getElementById('nav-aprendices'));
+                return;
+            }
+            if (sesionActiva.rol === "instructor" && (idVentanaDestino === "window-usuarios" || idVentanaDestino === "window-guias")) {
                 conmutarVentana('window-aprendices', document.getElementById('nav-aprendices'));
                 return;
             }
@@ -1322,7 +1326,7 @@
                 tr.className = "border-b border-[#3a506b]/30 hover:bg-[#1c2541]/40 transition-colors";
                 const checkStatus = estadoMallaGlobal[actividad.id] ? 'checked' : '';
 
-                const controlCheckboxHTML = (sesionActiva.rol === "profesor" || sesionActiva.rol === "instructor")
+                const controlCheckboxHTML = (sesionActiva.rol === "profesor")
                     ? `<label class="relative inline-flex items-center cursor-pointer justify-center">
                             <input type="checkbox" class="sr-only peer" ${checkStatus} onchange="cambiarMallaGlobal('${actividad.id}', this.checked)">
                             <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
