@@ -1243,7 +1243,9 @@
                 // Reset dashboard
                 document.getElementById('dash-nombre-estudiante').textContent = "Seleccione un aprendiz...";
                 document.getElementById('dash-documento-estudiante').textContent = "Doc: --";
-                document.getElementById('tarjetas-dashboard-container').innerHTML = '';
+                if(document.getElementById('contenedor-pendientes')) {
+                    document.getElementById('contenedor-pendientes').innerHTML = '';
+                }
             } else {
                 // Aprendiz: Solo ve el suyo
                 selectorEstudiantes.disabled = true;
