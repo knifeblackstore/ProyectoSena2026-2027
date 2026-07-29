@@ -156,15 +156,18 @@
                     </div>
                 </header>
 
-                <div class="bg-[#1c2541]/40 border border-[#3a506b]/50 p-4 rounded-xl flex items-center gap-4">
-                    <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-                        <i class="fa-solid fa-address-card text-xl"></i>
+                <div class="bg-[#1c2541]/40 border border-[#3a506b]/50 p-4 rounded-xl flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+                            <i class="fa-solid fa-address-card text-xl"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase font-mono tracking-widest text-slate-400">Perfil en Enfoque</span>
+                            <h4 id="dash-nombre-estudiante" class="text-lg font-bold text-white leading-tight">Cargando...</h4>
+                            <p id="dash-documento-estudiante" class="text-xs font-mono text-emerald-400 mt-0.5">Doc: --</p>
+                        </div>
                     </div>
-                    <div>
-                        <span class="text-[10px] uppercase font-mono tracking-widest text-slate-400">Perfil en Enfoque</span>
-                        <h4 id="dash-nombre-estudiante" class="text-lg font-bold text-white leading-tight">Cargando...</h4>
-                        <p id="dash-documento-estudiante" class="text-xs font-mono text-emerald-400 mt-0.5">Doc: --</p>
-                    </div>
+                    <button onclick="cambiarClaveUsuario()" class="text-[10px] bg-[#0b1329] hover:bg-[#3a506b] border border-[#3a506b] px-3 py-1.5 rounded-lg text-emerald-400 font-bold transition-colors uppercase tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-key"></i> Cambiar Clave</button>
                 </div>
                 
                 <div class="space-y-4">
