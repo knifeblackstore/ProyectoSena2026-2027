@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body {
@@ -29,42 +30,143 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #10b981;
         }
+    
+        /* --- ESTILOS LOGIN GLASSMORPHISM --- */
+        .tech-bg {
+            background-color: #0b1325;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(57, 169, 0, 0.12) 0%, transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+        .glass-card {
+            background: rgba(16, 26, 44, 0.65);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.25s ease;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #39a900;
+            box-shadow: 0 0 15px rgba(57, 169, 0, 0.35);
+            outline: none;
+        }
+        .btn-sena {
+            background: linear-gradient(135deg, #39a900 0%, #2e8b00 100%);
+            box-shadow: 0 4px 20px rgba(57, 169, 0, 0.35);
+            transition: all 0.25s ease;
+        }
+        .btn-sena:hover {
+            background: linear-gradient(135deg, #43c200 0%, #349e00 100%);
+            box-shadow: 0 6px 25px rgba(57, 169, 0, 0.55);
+            transform: translateY(-1px);
+        }
+        .btn-sena:active {
+            transform: translateY(1px);
+        }
     </style>
+
 </head>
 <body class="font-sans antialiased h-screen overflow-hidden">
 
-    <div id="pantalla-login" class="fixed inset-0 bg-[#0b1329] z-50 flex items-center justify-center p-4">
-        <div class="bg-[#1c2541] border border-[#3a506b] w-full max-w-md p-8 rounded-2xl shadow-2xl space-y-6">
-            <div class="text-center space-y-2">
-                <i class="fa-solid fa-graduation-cap text-5xl text-emerald-400"></i>
-                <h2 class="text-2xl font-black text-white tracking-wide">Servicio Nacional de Aprendizaje SENA - Ingreso</h2>
-                <p class="text-xs text-slate-400">Inicie sesión con su rol o número de identificación</p>
-            </div>
+    
+    <div id="pantalla-login" class="fixed inset-0 tech-bg z-50 flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-8 relative overflow-hidden text-white shadow-2xl">
             
-            <div class="flex border-b border-[#3a506b] mb-4">
-                <button id="btn-tab-login" onclick="cambiarTabAuth('login')" class="flex-1 py-2 text-sm font-bold text-emerald-400 border-b-2 border-emerald-400">Iniciar Sesión</button>
-                <button id="btn-tab-registro" onclick="cambiarTabAuth('registro')" class="flex-1 py-2 text-sm font-bold text-slate-400 border-b-2 border-transparent">Registrarse</button>
+            <div class="absolute -top-20 -left-20 w-44 h-44 bg-[#39a900]/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-20 -right-20 w-44 h-44 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center relative z-10 mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-inner mb-3">
+                    <svg class="w-8 h-8 text-[#39a900]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147L12 5.5l7.74 4.647M12 5.5v13m-6.75-8.5v5.5a6.75 6.75 0 0013.5 0v-5.5"/>
+                    </svg>
+                </div>
+                <h1 class="text-lg font-bold tracking-tight text-gray-100">Servicio Nacional de Aprendizaje</h1>
+                <p class="text-xs text-gray-400 mt-0.5">Ingreso al Portal del Aprendiz</p>
             </div>
 
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Cédula / Usuario</label>
-                    <input type="text" id="login-usuario" placeholder="Ingrese su cédula" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Contraseña</label>
-                    <input type="password" id="login-password" placeholder="Ingrese su contraseña" class="w-full bg-[#0b1329] border border-[#3a506b] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500 font-mono">
-                </div>
-                <button id="btn-auth-submit" onclick="ejecutarAutenticacion()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-[#0b1329] font-bold py-3 rounded-lg transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
-                    <i class="fa-solid fa-right-to-bracket"></i> Acceder al Sistema
+            <div class="flex border-b border-white/10 mb-6 text-sm">
+                <button id="btn-tab-login" onclick="cambiarTabAuth('login')" class="flex-1 pb-2.5 font-medium border-b-2 border-[#39a900] text-[#39a900] transition">
+                    Iniciar Sesión
+                </button>
+                <button id="btn-tab-registro" onclick="cambiarTabAuth('registro')" class="flex-1 pb-2.5 font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition">
+                    Registrarse
                 </button>
             </div>
 
+            <div id="loginForm" class="space-y-4 relative z-10" onkeydown="if(event.key==='Enter'){ejecutarAutenticacion();}">
+                
+                <div>
+                    <label class="block text-xs font-medium text-emerald-400 uppercase tracking-wider mb-1.5">
+                        Identificación / Usuario
+                    </label>
+                    <div class="flex gap-2">
+                        <select class="glass-input rounded-xl px-2.5 py-2.5 text-xs text-gray-200 bg-slate-900/60 focus:bg-slate-900 cursor-pointer w-20">
+                            <option value="CC" class="bg-slate-900">CC</option>
+                            <option value="TI" class="bg-slate-900">TI</option>
+                            <option value="CE" class="bg-slate-900">CE</option>
+                            <option value="PEP" class="bg-slate-900">PEP</option>
+                        </select>
+                        <input 
+                            type="text" 
+                            id="login-usuario"
+                            placeholder="Número de documento"
+                            required
+                            class="glass-input flex-1 rounded-xl px-3.5 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:placeholder-gray-400"
+                        />
+                    </div>
+                </div>
 
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                            Contraseña
+                        </label>
+                        <a href="#" class="text-xs text-gray-400 hover:text-emerald-400 transition-colors">¿La olvidaste?</a>
+                    </div>
+                    <div class="relative">
+                        <input 
+                            id="login-password"
+                            type="password" 
+                            placeholder="Ingrese su contraseña"
+                            required
+                            class="glass-input w-full rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:placeholder-gray-400"
+                        />
+                        <button 
+                            type="button" 
+                            onclick="togglePassword()"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors"
+                        >
+                            <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button 
+                    id="btn-auth-submit"
+                    onclick="ejecutarAutenticacion()"
+                    class="btn-sena w-full mt-2 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 tracking-wide"
+                >
+                    <span id="btn-auth-text">Acceder al Sistema</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
-
-    <!-- MODAL EDICIÓN PERFIL -->
+<!-- MODAL EDICIÓN PERFIL -->
     <div id="modal-perfil" class="fixed inset-0 bg-[#0b1329]/90 z-[100] flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-[#1c2541] border border-[#3a506b] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div class="bg-[#0b1329] px-6 py-4 border-b border-[#3a506b] flex justify-between items-center"><h2 class="text-white font-bold text-lg"><i class="fa-solid fa-user-pen text-emerald-400 mr-2"></i> Editar Perfil</h2><button onclick="document.getElementById('modal-perfil').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button></div>
