@@ -1103,7 +1103,7 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = "bg-[#1c2541] border border-[#3a506b]/50 p-5 rounded-xl flex flex-col justify-between hover:border-[#3a506b] transition-all shadow-lg space-y-4";
+                card.className = "bg-[#1c2541] border border-[#3a506b]/50 p-5 rounded-xl flex flex-col justify-between hover:border-[#3a506b] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-[#3a506b]/40 shadow-lg space-y-4";
                 card.innerHTML = `
                     <div class="flex items-start gap-3">
                         <div class="w-9 h-9 rounded-full bg-[#0b1329] border border-[#3a506b] flex items-center justify-center font-bold text-emerald-400 text-xs shrink-0">
@@ -1125,24 +1125,29 @@
 
                     <div class="grid grid-cols-3 gap-2 border-t border-b border-[#3a506b]/40 py-3 text-center">
                         <div class="bg-[#0b1329]/50 rounded-lg p-1.5 border border-[#3a506b]/20">
-                            <span class="text-[9px] uppercase font-semibold text-slate-400 block tracking-wider">Aprobadas</span>
-                            <span class="text-sm font-extrabold text-emerald-400">${entregadas} <span class="text-[10px] font-normal text-emerald-500/70">(${porcentajeAprobadas}%)</span></span>
-                        </div>
-                        <div onclick="conmutarAcordeonPendientes('${doc}')" class="bg-[#0b1329]/50 hover:bg-amber-500/5 hover:border-amber-500/30 rounded-lg p-1.5 border border-[#3a506b]/20 cursor-pointer group transition-all relative">
+                                  <div class="bg-[#0b1329]/50 hover:bg-amber-500/5 hover:border-amber-500/30 rounded-lg p-1.5 border border-[#3a506b]/20 cursor-default group transition-all relative">
                             <span class="text-[9px] uppercase font-semibold text-slate-400 group-hover:text-amber-400 block tracking-wider transition-colors flex items-center justify-center gap-1">
-                                Faltantes <i class="fa-solid fa-chevron-down text-[9px] mt-0.5"></i>
+                                Faltantes <i class="fa-solid fa-info-circle text-[9px] mt-0.5"></i>
                             </span>
                             <span class="text-sm font-extrabold ${faltantes > 0 ? 'text-amber-400' : 'text-slate-500'}">${faltantes} <span class="text-[10px] font-normal opacity-70">(${porcentajeFaltantes}%)</span></span>
+                            
+                            <!-- GLOBO (Tooltip) Container -->
+                            <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-3 w-72 transition-all duration-300">
+                                <!-- Contenido del globo -->
+                                <div class="bg-[#1c2541] border border-amber-500/50 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] text-left max-h-64 overflow-y-auto relative cursor-auto">
+                                    <!-- Flechita -->
+                                    <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#1c2541] border-b border-r border-amber-500/50 transform rotate-45"></div>
+                                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 relative z-10"><i class="fa-solid fa-list-ul text-emerald-500 mr-1"></i> Faltantes a la fecha:</p>
+                                    <div class="relative z-10 space-y-2">
+                                        ${listaGuiasPendientesHTML}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="bg-[#0b1329]/50 rounded-lg p-1.5 border border-[#3a506b]/20 flex flex-col justify-center">
                             <span class="text-[9px] uppercase font-semibold text-slate-400 block tracking-wider leading-tight">Avance Curso</span>
                             <span class="text-sm font-extrabold text-blue-400">${porcentajeCurso}%</span>
                         </div>
-                    </div>
-
-                    <div id="acordeon-${doc}" class="hidden bg-[#0b1329]/30 border border-[#3a506b]/30 rounded-lg p-3 space-y-2 max-h-64 overflow-y-auto">
-                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1"><i class="fa-solid fa-list-ul text-emerald-500 mr-1"></i> Estado de Guías:</p>
-                        ${listaGuiasPendientesHTML}
                     </div>
 
                     <div class="flex items-center justify-between text-xs pt-1">
@@ -1166,7 +1171,8 @@
         }
 
         function conmutarAcordeonPendientes(documentoId) {
-            document.getElementById(`acordeon-${documentoId}`).classList.toggle('hidden');
+            const acordeon = document.getElementById(`acordeon-${documentoId}`);
+            if (acordeon) acordeon.classList.toggle('hidden');
         }
 
         function cambiarApelacionDesdeFalta(documento, guiaId, valor) {
@@ -1175,7 +1181,8 @@
                 guardarAprobacionEnExcel(documento, guiaId, valor);
                 guardarEstadoLocal();
                 actualizarVentanaAprendices();
-                document.getElementById(`acordeon-${documento}`).classList.remove('hidden');
+                const acordeon = document.getElementById(`acordeon-${documento}`);
+                if (acordeon) acordeon.classList.remove('hidden');
                 generarConsolidadoApelaciones();
             }
         }
