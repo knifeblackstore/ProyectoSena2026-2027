@@ -64,13 +64,28 @@
         </div>
     </div>
 
-    <div id="app-content" class="flex h-screen overflow-hidden hidden">
+    <!-- MODAL EDICIÓN PERFIL -->
+    <div id="modal-perfil" class="fixed inset-0 bg-[#0b1329]/90 z-[100] flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-[#1c2541] border border-[#3a506b] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-[#0b1329] px-6 py-4 border-b border-[#3a506b] flex justify-between items-center"><h2 class="text-white font-bold text-lg"><i class="fa-solid fa-user-pen text-emerald-400 mr-2"></i> Editar Perfil</h2><button onclick="document.getElementById('modal-perfil').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="perfil-documento">
+                <div class="flex flex-col items-center mb-4"><img id="perfil-preview" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" class="w-24 h-24 rounded-full border-4 border-emerald-500/30 mb-2 object-cover" alt="Preview"></div>
+                <div><label class="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-wider">Nombre Completo</label><input type="text" id="perfil-nombre" class="w-full bg-[#0b1329] text-white border border-[#3a506b] rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-500 transition-all"></div>
+                <div><label class="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-wider">URL de Foto (Opcional)</label><input type="url" id="perfil-foto" class="w-full bg-[#0b1329] text-white border border-[#3a506b] rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-500 transition-all" onchange="document.getElementById('perfil-preview').src = this.value || 'https://ui-avatars.com/api/?name='+encodeURIComponent(document.getElementById('perfil-nombre').value)+'&background=0D8ABC&color=fff'"></div>
+                <button onclick="guardarPerfil()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-lg transition-all mt-4">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>    <div id="app-content" class="flex h-screen overflow-hidden hidden">
 
         <aside class="w-64 bg-[#1c2541] p-6 flex flex-col justify-between hidden md:flex border-r border-[#3a506b]">
             <div>
-                <div class="flex items-center gap-3 mb-8">
+                <div class="flex items-center gap-3 mb-2">
                     <i class="fa-solid fa-graduation-cap text-2xl text-emerald-400"></i>
                     <h1 class="text-xl font-bold tracking-wider text-emerald-400">SENA TASK</h1>
+                </div>
+                <div class="mb-8 hidden" id="contenedor-selector-ficha">
+                    <select id="beta-ficha-selector" onchange="cambiarFichaGlobal(this.value)" class="w-full bg-[#0b1329] text-emerald-400 border border-emerald-500/50 rounded px-2 py-1 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"><option value="default">Ficha Principal</option></select>
                 </div>
                 
                 <nav class="space-y-3">
@@ -92,9 +107,21 @@
                     <button id="nav-usuarios" onclick="conmutarVentana('window-usuarios', this)" class="admin-only w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all border border-transparent hover:border-indigo-500/20 hidden">
                         <i class="fa-solid fa-users text-indigo-400"></i> Gestión de Usuarios
                     </button>
+                    <button id="nav-fichas" onclick="conmutarVentana('window-fichas', this)" class="admin-only hidden w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all border border-transparent hover:border-purple-500/20">
+                        <i class="fa-solid fa-layer-group text-purple-400"></i> Gestión Fichas (Beta)
+                    </button>
                 </nav>
+                <div class="mt-6 bg-[#0b1329] border border-[#3a506b] rounded-lg p-4 text-center relative group">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Guías a la fecha</p>
+                    <p id="guias-meta-global" class="text-3xl font-black text-emerald-400 drop-shadow-md">0</p>
+                    <button onclick="editarMetaGuias()" id="btn-editar-meta" class="admin-only hidden absolute top-2 right-2 text-slate-500 hover:text-emerald-400 transition-colors" title="Editar contador"><i class="fa-solid fa-pen-to-square"></i></button>
+                </div>
+
+
             </div>
             
+            <div class="border-t border-[#3a506b] pt-4 space-y-3">
+                <button onclick="abrirModalPerfil()" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-2 rounded-lg font-semibold transition-all mb-3"><i class="fa-solid fa-user-edit text-blue-400"></i> Editar Mi Perfil</button>
             <div class="border-t border-[#3a506b] pt-4 space-y-3">
                 <div class="flex items-center gap-3">
                     <div id="avatar-rol" class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-black uppercase">--</div>
@@ -119,6 +146,15 @@
                     <h2 class="text-3xl font-extrabold text-white">Ventana de Aprendices</h2>
                     <p id="aprendices-subtitulo" class="text-slate-400">Cruza las guías habilitadas globales vs las entregadas ("A"). Permite reportar y hacer seguimiento a las apelaciones.</p>
                 </header>
+            <!-- CUADRO DE HONOR -->
+            <div class="mb-6 p-4 bg-gradient-to-r from-amber-500/20 to-transparent border-l-4 border-amber-500 rounded-r-lg">
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fa-solid fa-trophy text-amber-500 text-xl"></i>
+                    <h2 class="text-lg font-bold text-amber-400">Cuadro de Honor (Top 4 Entregas)</h2>
+                </div>
+                <div id="contenedor-cuadro-honor" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </div>
+
 
                 <div id="panel-carga-csv" class="admin-only bg-[#1c2541] border border-[#3a506b] p-5 rounded-xl space-y-4 shadow-lg hidden">
                     <div class="flex items-center gap-2.5">
@@ -345,7 +381,23 @@
                     </table>
                 </div>
             </section>
-        </main>
+        <!-- VENTANA GESTION FICHAS (BETA) -->
+        <section id="window-fichas" class="window-pane space-y-6 hidden h-full flex flex-col overflow-y-auto w-full">
+            <header class="border-b border-[#3a506b] pb-4"><h2 class="text-3xl font-extrabold text-white"><i class="fa-solid fa-layer-group text-purple-400 mr-2"></i> Gestión de Fichas (Beta)</h2><p class="text-slate-400 text-sm mt-1">Crea nuevos entornos (Fichas) independientes y asigna permisos a instructores.</p></header>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-[#1c2541] border border-[#3a506b] rounded-xl p-6 shadow-lg">
+                    <h2 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-plus text-purple-400 mr-2"></i> Crear Nueva Ficha</h2>
+                    <div class="space-y-4">
+                        <div><label class="block text-slate-400 text-xs font-bold mb-2">ID de la Ficha (Números)</label><input type="number" id="nueva-ficha-id" class="w-full bg-[#0b1329] text-white border border-[#3a506b] rounded px-3 py-2"></div>
+                        <div><label class="block text-slate-400 text-xs font-bold mb-2">Nombre/Descripción</label><input type="text" id="nueva-ficha-nombre" class="w-full bg-[#0b1329] text-white border border-[#3a506b] rounded px-3 py-2"></div>
+                        <button onclick="crearNuevaFicha()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded">Crear Ficha</button>
+                    </div>
+                </div>
+                <div class="bg-[#1c2541] border border-[#3a506b] rounded-xl p-6 shadow-lg">
+                    <h2 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-key text-purple-400 mr-2"></i> Permisos de Fichas</h2><div id="lista-fichas-admin" class="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+            </div>
+        </section>        </main>
     </div>
 
     <script>
@@ -584,6 +636,12 @@
         const estadoMallaGlobal = {};
         const entregasPorEstudiante = {};
         const apelacionesPorEstudiante = {};
+        let metaGuiasGlobal = 0;
+        let usuariosMetadataGlobal = {};
+        let fichaActivaGlobal = "default";
+        let metadataFichasGlobal = {};
+
+
 
         // Inicializamos todas las guías en falso
         LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false);
@@ -773,6 +831,14 @@
             }
         }
 
+        function editarMetaGuias() { const numStr = prompt("Ingrese el número de guías esperadas a la fecha:", metaGuiasGlobal); if (numStr !== null) { const num = parseInt(numStr, 10); if (!isNaN(num) && num >= 0) database.ref('configuracion/metaGuias').set(num); } }
+        function abrirModalPerfil(doc = null) { const documento = doc || sesionActiva.documento; document.getElementById('perfil-documento').value = documento; let nombreActual = (usuariosMetadataGlobal[documento] && usuariosMetadataGlobal[documento].nombre) ? usuariosMetadataGlobal[documento].nombre : (LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento === documento)?.nombre || ""); document.getElementById('perfil-nombre').value = nombreActual; const fotoUrl = (usuariosMetadataGlobal[documento] && usuariosMetadataGlobal[documento].foto) ? usuariosMetadataGlobal[documento].foto : ''; document.getElementById('perfil-foto').value = fotoUrl; document.getElementById('perfil-preview').src = fotoUrl || 'https://ui-avatars.com/api/?name='+encodeURIComponent(nombreActual)+'&background=0D8ABC&color=fff'; document.getElementById('modal-perfil').classList.remove('hidden'); }
+        function guardarPerfil() { const doc = document.getElementById('perfil-documento').value; const nombre = document.getElementById('perfil-nombre').value.trim(); const foto = document.getElementById('perfil-foto').value.trim(); if (!nombre) return alert("El nombre no puede estar vacío."); originalRef('usuarios/' + doc).update({ nombre: nombre, foto: foto }).then(() => { alert("Perfil actualizado correctamente."); document.getElementById('modal-perfil').classList.add('hidden'); if (doc === sesionActiva.documento) document.getElementById('user-display-name').textContent = nombre; actualizarVentanaAprendices(); }); }
+        function cambiarFichaGlobal(nuevaFicha) { if (fichaActivaGlobal === nuevaFicha) return; originalRef('estado').off(); originalRef('aprobaciones').off(); originalRef('videos').off(); originalRef('configuracion/metaGuias').off(); if (fichaActivaGlobal !== "default") { originalRef('fichas/' + fichaActivaGlobal + '/estado').off(); originalRef('fichas/' + fichaActivaGlobal + '/aprobaciones').off(); originalRef('fichas/' + fichaActivaGlobal + '/videos').off(); originalRef('fichas/' + fichaActivaGlobal + '/configuracion/metaGuias').off(); } fichaActivaGlobal = nuevaFicha; videosGlobales = []; LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false); LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => { entregasPorEstudiante[e.documento] = {}; apelacionesPorEstudiante[e.documento] = {}; LISTADO_OFICIAL_PROTEGIDO.forEach(g => { entregasPorEstudiante[e.documento][g.id] = false; apelacionesPorEstudiante[e.documento][g.id] = "NINGUNA"; }); }); metaGuiasGlobal = 0; document.getElementById('guias-meta-global').textContent = 0; iniciarListenersContextoGlobal(); }
+        function crearNuevaFicha() { const id = document.getElementById('nueva-ficha-id').value.trim(); const nombre = document.getElementById('nueva-ficha-nombre').value.trim(); if (!id || !nombre) return alert("Llena todos los campos."); originalRef('fichas_metadata/' + id).set({ nombre: nombre, id: id }).then(() => { alert("Ficha creada!"); document.getElementById('nueva-ficha-id').value = ''; document.getElementById('nueva-ficha-nombre').value = ''; }); }
+        function renderizarListaFichasAdmin() { const cont = document.getElementById('lista-fichas-admin'); if(!cont) return; let html = ''; Object.values(metadataFichasGlobal).forEach(ficha => { html += `<div class="bg-[#0b1329] border border-[#3a506b] p-3 rounded mb-2"><div class="text-purple-400 font-bold mb-2">${ficha.nombre} (ID: ${ficha.id})</div><div class="flex flex-col gap-1 pl-2">`; Object.keys(usuariosMetadataGlobal).forEach(doc => { const usr = usuariosMetadataGlobal[doc]; if (usr.fichasAsignadas !== undefined || !LISTADO_ESTUDIANTES_PROTEGIDO.find(e=>e.documento===doc)) { const tieneAcceso = usr.fichasAsignadas && usr.fichasAsignadas[ficha.id] === true; html += `<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" ${tieneAcceso ? 'checked' : ''} onchange="originalRef('usuarios/${doc}/fichasAsignadas/${ficha.id}').set(this.checked)" class="accent-purple-500"><span class="text-slate-300">${usr.nombre || doc}</span></label>`; } }); html += `</div></div>`; }); cont.innerHTML = html; }
+        function actualizarSelectorFichas() { const selector = document.getElementById('beta-ficha-selector'); const cont = document.getElementById('contenedor-selector-ficha'); if (sesionActiva.rol === 'admin') { cont.classList.remove('hidden'); let opts = '<option value="default">Ficha Principal</option>'; Object.values(metadataFichasGlobal).forEach(f => opts += `<option value="${f.id}">${f.nombre} (Beta)</option>`); selector.innerHTML = opts; selector.value = fichaActivaGlobal; renderizarListaFichasAdmin(); } else if (sesionActiva.rol === 'profesor') { const usr = usuariosMetadataGlobal[sesionActiva.documento]; if (usr && usr.fichasAsignadas) { const fichasMias = Object.keys(usr.fichasAsignadas).filter(k => usr.fichasAsignadas[k]); if (fichasMias.length > 0) { cont.classList.remove('hidden'); let opts = '<option value="default">Ficha Principal</option>'; fichasMias.forEach(id => { if (metadataFichasGlobal[id]) opts += `<option value="${id}">${metadataFichasGlobal[id].nombre} (Beta)</option>`; }); selector.innerHTML = opts; selector.value = fichaActivaGlobal; } } else cont.classList.add('hidden'); } else cont.classList.add('hidden'); }
+
         function cerrarSesion() {
             sesionActiva = { autenticado: false, rol: "", documento: "" };
             localStorage.removeItem('senaSesionGuardada');
@@ -930,7 +996,7 @@
 
         // 📇 VENTANA 1: RENDER DE APRENDICES (OPCIONES LIMITADAS PARA EL APRENDIZ)
         function actualizarVentanaAprendices() {
-            tarjetasContainer.innerHTML = '';
+            tarjetasContainer.innerHTML = '';            const conteoParaHonor = [];
             
             const listaFiltrada = (sesionActiva.rol === "profesor" || sesionActiva.rol === "instructor" || sesionActiva.documento === "sena2026")
                 ? LISTADO_ESTUDIANTES_PROTEGIDO 
@@ -940,17 +1006,38 @@
                 const doc = estudiante.documento;
                 const tipoDoc = doc.slice(-2).toUpperCase();
                 const numDoc = doc.slice(0, -2);
+                let nombreDisplay = estudiante.apellidos + ' ' + estudiante.nombres;
+                let fotoDisplay = 'https://ui-avatars.com/api/?name='+encodeURIComponent(nombreDisplay)+'&background=1c2541&color=fff';
+                if (usuariosMetadataGlobal[doc]) {
+                    if (usuariosMetadataGlobal[doc].nombre) nombreDisplay = usuariosMetadataGlobal[doc].nombre;
+                    if (usuariosMetadataGlobal[doc].foto) fotoDisplay = usuariosMetadataGlobal[doc].foto;
+                }
                 
                 let entregadas = 0;
-                let faltantes = 0;
                 let listaGuiasPendientesHTML = '';
 
-                LISTADO_OFICIAL_PROTEGIDO.forEach(g => {
-                    if (estadoMallaGlobal[g.id] === true) {
-                        if (entregasPorEstudiante[doc] && entregasPorEstudiante[doc][g.id] === true) {
-                            entregadas++;
-                        } else {
-                            faltantes++;
+                const guiasHabilitadas = LISTADO_OFICIAL_PROTEGIDO.filter(g => estadoMallaGlobal[g.id] === true);
+                const totalHabilitadas = guiasHabilitadas.length;
+                
+                guiasHabilitadas.forEach(g => {
+                    if (entregasPorEstudiante[doc] && entregasPorEstudiante[doc][g.id] === true) {
+                        entregadas++;
+                    }
+                });
+
+                const meta = parseInt(metaGuiasGlobal) || 0;
+                let faltantes = Math.max(0, meta - entregadas);
+                
+                const porcentajeAprobadas = meta > 0 ? Math.min(100, (entregadas / meta) * 100).toFixed(1) : 0;
+                const porcentajeFaltantes = meta > 0 ? Math.min(100, (faltantes / meta) * 100).toFixed(1) : 0;
+                const porcentajeCurso = totalHabilitadas > 0 ? Math.min(100, (meta / totalHabilitadas) * 100).toFixed(1) : 0;
+
+                let pendientesMostradas = 0;
+
+                guiasHabilitadas.forEach(g => {
+                    if (!entregasPorEstudiante[doc] || entregasPorEstudiante[doc][g.id] !== true) {
+                        if (pendientesMostradas < faltantes) {
+                            pendientesMostradas++;
                             
                             const apelacionActual = (apelacionesPorEstudiante[doc] && apelacionesPorEstudiante[doc][g.id]) || "NINGUNA";
                             let controlNovedadHTML = '';
@@ -1009,6 +1096,8 @@
                     novedadesEstilo = "text-amber-400 bg-amber-500/10 border-amber-500/30";
                 }
 
+                conteoParaHonor.push({ nombre: nombreDisplay, aprobadas: entregadas });                
+                
                 if (listaGuiasPendientesHTML === '') {
                     listaGuiasPendientesHTML = `<p class="text-xs text-center text-emerald-400 font-medium py-2">🎉 ¡Al día con todas las guías habilitadas!</p>`;
                 }
@@ -1021,24 +1110,33 @@
                             ${String(index + 1).padStart(2, '0')}
                         </div>
                         <div class="truncate">
-                            <h4 class="text-sm font-bold text-white truncate leading-tight">${estudiante.apellidos}</h4>
-                            <p class="text-xs text-slate-300 truncate mt-0.5">${estudiante.nombres}</p>
+                            <div class="flex items-center gap-2">
+                                <img src="${fotoDisplay}" class="w-8 h-8 rounded-full border border-[#3a506b] object-cover">
+                                <div>
+                                    <h4 class="text-sm font-bold text-white truncate leading-tight">${nombreDisplay}</h4>
+                                    ${sesionActiva.rol === 'admin' ? `<button onclick="abrirModalPerfil('${doc}')" class="text-[10px] text-slate-500 hover:text-blue-400 transition-colors mt-0.5" title="Editar Perfil"><i class="fa-solid fa-pen-to-square"></i> Editar Info</button>` : ''}
+                                </div>
+                            </div>
                             <span class="text-[9px] font-mono bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 font-bold border border-[#3a506b]/40 mt-1 inline-block">
                                 ${tipoDoc}: ${numDoc}
                             </span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 border-t border-b border-[#3a506b]/40 py-3 text-center">
-                        <div class="bg-[#0b1329]/50 rounded-lg p-2 border border-[#3a506b]/20">
-                            <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Aprobadas</span>
-                            <span class="text-base font-extrabold text-emerald-400">${entregadas}</span>
+                    <div class="grid grid-cols-3 gap-2 border-t border-b border-[#3a506b]/40 py-3 text-center">
+                        <div class="bg-[#0b1329]/50 rounded-lg p-1.5 border border-[#3a506b]/20">
+                            <span class="text-[9px] uppercase font-semibold text-slate-400 block tracking-wider">Aprobadas</span>
+                            <span class="text-sm font-extrabold text-emerald-400">${entregadas} <span class="text-[10px] font-normal text-emerald-500/70">(${porcentajeAprobadas}%)</span></span>
                         </div>
-                        <div onclick="conmutarAcordeonPendientes('${doc}')" class="bg-[#0b1329]/50 hover:bg-amber-500/5 hover:border-amber-500/30 rounded-lg p-2 border border-[#3a506b]/20 cursor-pointer group transition-all relative">
-                            <span class="text-[10px] uppercase font-semibold text-slate-400 group-hover:text-amber-400 block tracking-wider transition-colors flex items-center justify-center gap-1">
+                        <div onclick="conmutarAcordeonPendientes('${doc}')" class="bg-[#0b1329]/50 hover:bg-amber-500/5 hover:border-amber-500/30 rounded-lg p-1.5 border border-[#3a506b]/20 cursor-pointer group transition-all relative">
+                            <span class="text-[9px] uppercase font-semibold text-slate-400 group-hover:text-amber-400 block tracking-wider transition-colors flex items-center justify-center gap-1">
                                 Faltantes <i class="fa-solid fa-chevron-down text-[9px] mt-0.5"></i>
                             </span>
-                            <span class="text-base font-extrabold ${faltantes > 0 ? 'text-amber-400' : 'text-slate-500'}">${faltantes}</span>
+                            <span class="text-sm font-extrabold ${faltantes > 0 ? 'text-amber-400' : 'text-slate-500'}">${faltantes} <span class="text-[10px] font-normal opacity-70">(${porcentajeFaltantes}%)</span></span>
+                        </div>
+                        <div class="bg-[#0b1329]/50 rounded-lg p-1.5 border border-[#3a506b]/20 flex flex-col justify-center">
+                            <span class="text-[9px] uppercase font-semibold text-slate-400 block tracking-wider leading-tight">Avance Curso</span>
+                            <span class="text-sm font-extrabold text-blue-400">${porcentajeCurso}%</span>
                         </div>
                     </div>
 
@@ -1055,6 +1153,16 @@
                     </div>`;
                 tarjetasContainer.appendChild(card);
             });
+
+            const contenedorHonor = document.getElementById('contenedor-cuadro-honor');
+            if(contenedorHonor) {
+                conteoParaHonor.sort((a, b) => b.aprobadas - a.aprobadas);
+                const top4 = conteoParaHonor.slice(0, 4).filter(a => a.aprobadas > 0);
+                if (top4.length === 0) { contenedorHonor.innerHTML = '<p class="text-slate-400 text-sm italic col-span-full">Aún no hay aprendices con guías aprobadas.</p>'; }
+                else {
+                    contenedorHonor.innerHTML = top4.map((a, i) => `<div class="bg-[#0b1329]/80 border ${i===0 ? 'border-amber-500/50' : 'border-[#3a506b]'} rounded-lg p-3 flex items-center gap-3 shadow-lg relative overflow-hidden">${i===0 ? '<div class="absolute -right-4 -top-4 w-12 h-12 bg-amber-500/20 rounded-full blur-xl"></div>' : ''}<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${i===0 ? 'bg-amber-500 text-white' : 'bg-[#1c2541] text-amber-400/70 border border-[#3a506b]'}">#${i+1}</div><div class="flex-1 min-w-0"><p class="text-white font-bold text-sm truncate">${a.nombre}</p><p class="text-emerald-400 text-xs font-semibold">${a.aprobadas} Aprobadas</p></div></div>`).join('');
+                }
+            }
         }
 
         function conmutarAcordeonPendientes(documentoId) {
@@ -1168,7 +1276,7 @@
             const lector = new FileReader();
 
             lector.onload = function(evento) {
-                const contenido = evento.target.result;
+                const contenido = evento.target.result.replace(/\x00/g, '');
                 const lineas = contenido.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
                 if(lineas.length <= 1) {
@@ -1176,18 +1284,48 @@
                     return;
                 }
 
-                const separador = lineas[0].includes(';') ? ';' : ',';
-                const cabeceras = lineas[0].split(separador).map(c => c.replace(/"/g, '').trim());
-                const indiceCedula = cabeceras.findIndex(c => c.toUpperCase() === 'CEDULA');
+                const normalizarTexto = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                
+                let indiceCabecera = -1;
+                let cabeceras = [];
+                let separador = ',';
+                let indiceCedula = -1;
+
+                for (let i = 0; i < Math.min(lineas.length, 15); i++) {
+                    const sep = lineas[i].includes(';') ? ';' : (lineas[i].includes('\t') ? '\t' : ',');
+                    const cols = lineas[i].split(sep).map(c => c.replace(/"/g, '').trim());
+                    const idx = cols.findIndex(c => {
+                        const norm = normalizarTexto(c);
+                        return norm === 'CEDULA' || norm === 'DOCUMENTO' || norm === 'IDENTIFICACION' || norm === 'ID' || norm.includes('DOCUMENTO') || norm.includes('CEDULA');
+                    });
+                    
+                    if (idx !== -1) {
+                        indiceCabecera = i;
+                        cabeceras = cols;
+                        separador = sep;
+                        indiceCedula = idx;
+                        break;
+                    }
+                }
 
                 if (indiceCedula === -1) {
-                    alert("No se encontró la columna 'CEDULA' en la cabecera del archivo.");
+                    const sepFallback = lineas[0].includes(';') ? ';' : (lineas[0].includes('\t') ? '\t' : ',');
+                    const colsFallback = lineas[0].split(sepFallback).map(c => c.replace(/"/g, '').trim());
+                    alert("No se encontró la columna 'CEDULA' o 'DOCUMENTO' en las primeras líneas del archivo. Columnas detectadas en la primera línea: " + colsFallback.join(", "));
                     return;
                 }
 
                 resetearEntregas();
 
-                for (let i = 1; i < lineas.length; i++) {
+                // Habilitar automáticamente las guías que estén en el CSV
+                cabeceras.forEach(cabecera => {
+                    if (LISTADO_OFICIAL_PROTEGIDO.some(act => act.id === cabecera)) {
+                        estadoMallaGlobal[cabecera] = true;
+                    }
+                });
+                localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
+
+                for (let i = indiceCabecera + 1; i < lineas.length; i++) {
                     const columns = lineas[i].split(separador).map(col => col.replace(/"/g, '').trim());
                     if (columns.length <= indiceCedula) continue;
 
@@ -1421,13 +1559,25 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        const originalRef = database.ref.bind(database);
+        database.ref = function(path) {
+            if (path === undefined) return originalRef();
+            if (!path || typeof path !== 'string') return originalRef(path);
+            if (fichaActivaGlobal !== "default" && (path.startsWith('estado') || path.startsWith('aprobaciones') || path.startsWith('videos') || path.startsWith('configuracion'))) return originalRef('fichas/' + fichaActivaGlobal + '/' + path);
+            return originalRef(path);
+        };
+
+        originalRef('fichas_metadata').on('value', snap => { if (snap.val()) { metadataFichasGlobal = snap.val(); actualizarSelectorFichas(); } });
+        originalRef('usuarios').on('value', snap => { if (snap.val()) { usuariosMetadataGlobal = snap.val(); actualizarVentanaAprendices(); actualizarSelectorFichas(); } });
+
         let videosGlobales = [];
 
         // =====================================================================
         // AUTO-RESTAURAR ESTADO DESDE FIREBASE AL CARGAR LA PÁGINA
         // Esto hace que el CSV y TXT se "recuerden" sin volver a subirlos
         // =====================================================================
-        database.ref('estado').once('value', (snapshot) => {
+        function iniciarListenersContextoGlobal() {
+            database.ref('estado').once('value', (snapshot) => {
             const estado = snapshot.val();
             if (!estado) return;
 
@@ -1456,8 +1606,18 @@
                         estadoMallaGlobal[id] = estado.malla[id];
                     }
                 });
+                localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
                 cargarTablaMallaOficial();
                 actualizarContadores();
+            } else {
+                const cacheMalla = localStorage.getItem('mallaGlobalSena');
+                if (cacheMalla && fichaActivaGlobal === "default") {
+                    try {
+                        const parsedMalla = JSON.parse(cacheMalla);
+                        Object.keys(parsedMalla).forEach(id => { if (estadoMallaGlobal.hasOwnProperty(id)) estadoMallaGlobal[id] = parsedMalla[id]; });
+                        cargarTablaMallaOficial(); actualizarContadores(); actualizarVentanaAprendices();
+                    } catch(e){}
+                }
             }
 
             // Actualizar todas las vistas
@@ -1468,7 +1628,6 @@
             // Guardar en localStorage también para acceso rápido
             localStorage.setItem('entregasSena', JSON.stringify(entregasPorEstudiante));
             localStorage.setItem('apelacionesSena', JSON.stringify(apelacionesPorEstudiante));
-            if (estado.malla) localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
         });
 
         // Leer caché local inicialmente para no mostrar vacío
@@ -1487,6 +1646,9 @@
                 renderizarVideos();
             }
         });
+        database.ref('configuracion/metaGuias').on('value', snap => { if(snap.val() !== null) { metaGuiasGlobal = snap.val(); document.getElementById('guias-meta-global').textContent = metaGuiasGlobal; } });
+        }
+        iniciarListenersContextoGlobal();
 
         function actualizarDatalistInstructores() {
             const datalist = document.getElementById('lista-instructores');
@@ -1513,41 +1675,24 @@
             });
         }
 
+        function eliminarVideo(id) { if (confirm("¿Eliminar este video?")) database.ref('videos/' + id).remove(); }
+        function editarVideo(id) {
+            const v = videosGlobales.find(v => v.id === id); if (!v) return;
+            const t = prompt("Nuevo título:", v.titulo); if (t) { const u = prompt("Nueva URL:", v.url); if (u) database.ref('videos/' + id).update({titulo: t, url: u}); }
+        }
         function renderizarVideos() {
             const contenedor = document.getElementById('contenedor-videos-ui');
-            if (videosGlobales.length === 0) {
-                contenedor.innerHTML = `<p class="text-slate-400 text-sm text-center col-span-full py-10">Esperando conexión a la Nube...</p>`;
-                return;
-            }
-            
-            const agrupar = videosGlobales.reduce((acc, v) => {
-                if (!acc[v.instructor]) acc[v.instructor] = [];
-                acc[v.instructor].push(v);
-                return acc;
-            }, {});
-            
+            if (videosGlobales.length === 0) return contenedor.innerHTML = `<p class="text-slate-400 text-sm text-center col-span-full py-10">Esperando conexión a la Nube...</p>`;
+            const agrupar = videosGlobales.reduce((acc, v) => { if(!acc[v.instructor]) acc[v.instructor]=[]; acc[v.instructor].push(v); return acc; }, {});
             let html = '';
             for (const inst in agrupar) {
-                html += `<div class="col-span-full mb-1 mt-5 bg-emerald-500/10 border-l-4 border-emerald-500 p-2 text-emerald-400 font-bold rounded-r text-sm uppercase tracking-wider"><i class="fa-solid fa-chalkboard-user"></i> Instructor: ${inst}</div>`;
-                
-                agrupar[inst].sort((a, b) => {
-                    const getD = t => {
-                        const m = t.match(/(\d{2})-(\d{2})-(\d{2})/);
-                        return m ? new Date(`20${m[3]}`, m[2]-1, m[1]) : new Date(0);
-                    };
-                    return getD(b.titulo) - getD(a.titulo);
-                });
-                
+                html += `<details class="col-span-full mb-3 group bg-[#1c2541]/50 rounded-xl border border-[#3a506b] overflow-hidden"><summary class="list-none cursor-pointer p-4 bg-gradient-to-r from-emerald-500/20 to-transparent flex items-center justify-between text-emerald-400 font-bold uppercase tracking-wider select-none hover:bg-emerald-500/30 transition-colors"><div class="flex items-center gap-3"><i class="fa-solid fa-chalkboard-user"></i> Instructor: ${inst}<span class="text-xs bg-emerald-500 text-[#0b1329] px-2 py-0.5 rounded-full ml-2">${agrupar[inst].length} videos</span></div><i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180"></i></summary><div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">`;
+                agrupar[inst].sort((a,b)=>{ const getD=t=>{const m=t.match(/(\d{2})-(\d{2})-(\d{2})/); return m?new Date('20'+m[3],m[2]-1,m[1]):new Date(0);}; return getD(b.titulo)-getD(a.titulo); });
                 agrupar[inst].forEach(v => {
-                    html += `
-                        <div class="bg-[#1c2541] border border-[#3a506b] hover:border-emerald-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg transition-all group">
-                            <h4 class="text-sm font-bold text-white mb-4 group-hover:text-emerald-400 transition-colors" style="min-height: 2.5rem">${v.titulo}</h4>
-                            <a href="${v.url}" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-center transition-all text-xs flex items-center justify-center gap-2">
-                                <i class="fa-brands fa-youtube text-lg"></i> Ver Grabación
-                            </a>
-                        </div>
-                    `;
+                    const adminHtml = sesionActiva.rol === 'admin' ? `<div class="flex gap-2 mt-2"><button onclick="editarVideo('${v.id}')" class="flex-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-500 py-1 rounded text-xs transition-colors"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarVideo('${v.id}')" class="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-500 py-1 rounded text-xs transition-colors"><i class="fa-solid fa-trash"></i></button></div>` : '';
+                    html += `<div class="bg-[#0b1329] border border-[#3a506b] hover:border-emerald-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg transition-all group/card"><h4 class="text-sm font-bold text-white mb-4 group-hover/card:text-emerald-400 transition-colors" style="min-height: 2.5rem">${v.titulo}</h4><div><a href="${v.url}" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-center transition-all text-xs flex items-center justify-center gap-2"><i class="fa-brands fa-youtube text-lg"></i> Ver Grabación</a>${adminHtml}</div></div>`;
                 });
+                html += `</div></details>`;
             }
             contenedor.innerHTML = html;
         }
