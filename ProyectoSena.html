@@ -1435,21 +1435,42 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
                 });
                 localStorage.setItem('mallaGlobalSena', JSON.stringify(estadoMallaGlobal));
 
+                let indiceNombres = cabeceras.findIndex(c => normalizarTexto(c).includes('NOMBRE') || normalizarTexto(c) === 'NOMBRES');
+                let indiceApellidos = cabeceras.findIndex(c => normalizarTexto(c).includes('APELLIDO'));
+
                 for (let i = indiceCabecera + 1; i < lineas.length; i++) {
                     const columns = lineas[i].split(separador).map(col => col.replace(/"/g, '').trim());
                     if (columns.length <= indiceCedula) continue;
 
-                    const documento = columns[indiceCedula].toLowerCase();
+                    let documentoRaw = columns[indiceCedula];
+                    if(!documentoRaw) continue;
+                    let documento = documentoRaw.toLowerCase();
 
-                    if (entregasPorEstudiante.hasOwnProperty(documento)) {
-                        for (let colIdx = 0; colIdx < columns.length; colIdx++) {
-                            const posibleGuiaId = cabeceras[colIdx];
-                            const calificacion = columns[colIdx].toUpperCase();
+                    // Comprobar si el estudiante existe. Si no, lo creamos.
+                    if (!estudiantesActivosGlobal.some(e => e.documento === documento)) {
+                        let nombres = indiceNombres !== -1 && columns[indiceNombres] ? columns[indiceNombres].toUpperCase() : "APRENDIZ";
+                        let apellidos = indiceApellidos !== -1 && columns[indiceApellidos] ? columns[indiceApellidos].toUpperCase() : "NUEVO";
+                        
+                        let nuevoEstudiante = { documento: documento, nombres: nombres, apellidos: apellidos };
+                        estudiantesActivosGlobal.push(nuevoEstudiante);
+                        database.ref('fichas/' + fichaActivaGlobal + '/aprendices/' + documento).set(nuevoEstudiante);
+                        
+                        if (!entregasPorEstudiante[documento]) entregasPorEstudiante[documento] = {};
+                        if (!apelacionesPorEstudiante[documento]) apelacionesPorEstudiante[documento] = {};
+                        LISTADO_OFICIAL_PROTEGIDO.forEach(g => {
+                            if (entregasPorEstudiante[documento][g.id] === undefined) entregasPorEstudiante[documento][g.id] = false;
+                            if (apelacionesPorEstudiante[documento][g.id] === undefined) apelacionesPorEstudiante[documento][g.id] = "NINGUNA";
+                        });
+                    }
 
-                            if (posibleGuiaId && LISTADO_OFICIAL_PROTEGIDO.some(act => act.id === posibleGuiaId)) {
-                                if (calificacion === 'A') {
-                                    entregasPorEstudiante[documento][posibleGuiaId] = true;
-                                }
+                    // Ahora sí procesamos las entregas
+                    for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+                        const posibleGuiaId = cabeceras[colIdx];
+                        const calificacion = columns[colIdx] ? columns[colIdx].toUpperCase() : "";
+
+                        if (posibleGuiaId && LISTADO_OFICIAL_PROTEGIDO.some(act => act.id === posibleGuiaId)) {
+                            if (calificacion === 'A') {
+                                entregasPorEstudiante[documento][posibleGuiaId] = true;
                             }
                         }
                     }
