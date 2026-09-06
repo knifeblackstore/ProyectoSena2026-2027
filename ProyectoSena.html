@@ -706,7 +706,8 @@
         ];
 
         // 👥 LOS 24 APRENDICES RESTAURADOS COMPLETAMENTE
-        const LISTADO_ESTUDIANTES_PROTEGIDO = [
+        let estudiantesActivosGlobal = [];
+const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
             { documento: "1116615833cc", nombres: "DUBAN ENRIQUE", apellidos: "ACEVEDO GAUCHA" },
             { documento: "1043635895cc", nombres: "JAIR ENRIQUE", apellidos: "ACOSTA BARRIOS" },
             { documento: "1012368168cc", nombres: "EDISON NORBERTO", apellidos: "AGUILAR CARREÑO" },
@@ -740,7 +741,7 @@
         const apelacionesPorEstudiante = {};
         let metaGuiasGlobal = 0;
         let usuariosMetadataGlobal = {};
-        let fichaActivaGlobal = "default";
+        let fichaActivaGlobal = "3186645";
         let metadataFichasGlobal = {};
 
 
@@ -749,7 +750,7 @@
         LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false);
         
         function resetearEntregas() {
-            LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
+            estudiantesActivosGlobal.forEach(e => {
                 entregasPorEstudiante[e.documento] = {};
                 apelacionesPorEstudiante[e.documento] = {};
                 LISTADO_OFICIAL_PROTEGIDO.forEach(act => {
@@ -822,7 +823,7 @@
 
             // Si es registro, validar que el estudiante exista en la lista oficial antes de nada
             if (modoAuth === 'registro') {
-                const estudianteValido = LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento.toLowerCase() === usuario);
+                const estudianteValido = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === usuario);
                 if (!estudianteValido) {
                     alert("La cédula no está registrada en la lista oficial de aprendices SENA. Si eres instructor, el administrador debe crearte la cuenta.");
                     return;
@@ -891,7 +892,7 @@
             if (sesionActiva.documento === "admin") {
                 nombreUsuario = "Administrador Global";
             } else {
-                const est = LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase());
+                const est = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase());
                 if (est) {
                     nombreUsuario = `${est.nombres} ${est.apellidos}`;
                 } else if (sesionActiva.nombres && sesionActiva.apellidos) {
@@ -934,11 +935,11 @@
         }
 
         function editarMetaGuias() { const numStr = prompt("Ingrese el número de guías esperadas a la fecha:", metaGuiasGlobal); if (numStr !== null) { const num = parseInt(numStr, 10); if (!isNaN(num) && num >= 0) database.ref('configuracion/metaGuias').set(num); } }
-        function abrirModalPerfil(doc = null) { const documento = doc || sesionActiva.documento; document.getElementById('perfil-documento').value = documento; let nombreActual = (usuariosMetadataGlobal[documento] && usuariosMetadataGlobal[documento].nombre) ? usuariosMetadataGlobal[documento].nombre : (LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento === documento)?.nombre || ""); document.getElementById('perfil-nombre').value = nombreActual; const fotoUrl = (usuariosMetadataGlobal[documento] && usuariosMetadataGlobal[documento].foto) ? usuariosMetadataGlobal[documento].foto : ''; document.getElementById('perfil-foto').value = fotoUrl; document.getElementById('perfil-preview').src = fotoUrl || 'https://ui-avatars.com/api/?name='+encodeURIComponent(nombreActual)+'&background=0D8ABC&color=fff'; document.getElementById('modal-perfil').classList.remove('hidden'); }
+        function abrirModalPerfil(doc = null) { const documento = doc || sesionActiva.documento; document.getElementById('perfil-documento').value = documento; let nombreActual = (usuariosMetadataGlobal[documento] && usuariosMetadataGlobal[documento].nombre) ? usuariosMetadataGlobal[documento].nombre : (estudiantesActivosGlobal.find(e => e.documento === documento)?.nombre || ""); document.getElementById('perfil-nombre').value = nombreActual; const fotoUrl = (usuariosMetadataGlobal[documento] && usuariosMetadataGlobal[documento].foto) ? usuariosMetadataGlobal[documento].foto : ''; document.getElementById('perfil-foto').value = fotoUrl; document.getElementById('perfil-preview').src = fotoUrl || 'https://ui-avatars.com/api/?name='+encodeURIComponent(nombreActual)+'&background=0D8ABC&color=fff'; document.getElementById('modal-perfil').classList.remove('hidden'); }
         function guardarPerfil() { const doc = document.getElementById('perfil-documento').value; const nombre = document.getElementById('perfil-nombre').value.trim(); const foto = document.getElementById('perfil-foto').value.trim(); if (!nombre) return alert("El nombre no puede estar vacío."); originalRef('usuarios/' + doc).update({ nombre: nombre, foto: foto }).then(() => { alert("Perfil actualizado correctamente."); document.getElementById('modal-perfil').classList.add('hidden'); if (doc === sesionActiva.documento) document.getElementById('user-display-name').textContent = nombre; actualizarVentanaAprendices(); }); }
-        function cambiarFichaGlobal(nuevaFicha) { if (fichaActivaGlobal === nuevaFicha) return; originalRef('estado').off(); originalRef('aprobaciones').off(); originalRef('videos').off(); originalRef('configuracion/metaGuias').off(); if (fichaActivaGlobal !== "default") { originalRef('fichas/' + fichaActivaGlobal + '/estado').off(); originalRef('fichas/' + fichaActivaGlobal + '/aprobaciones').off(); originalRef('fichas/' + fichaActivaGlobal + '/videos').off(); originalRef('fichas/' + fichaActivaGlobal + '/configuracion/metaGuias').off(); } fichaActivaGlobal = nuevaFicha; videosGlobales = []; LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false); LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => { entregasPorEstudiante[e.documento] = {}; apelacionesPorEstudiante[e.documento] = {}; LISTADO_OFICIAL_PROTEGIDO.forEach(g => { entregasPorEstudiante[e.documento][g.id] = false; apelacionesPorEstudiante[e.documento][g.id] = "NINGUNA"; }); }); metaGuiasGlobal = 0; document.getElementById('guias-meta-global').textContent = 0; iniciarListenersContextoGlobal(); }
+        function cambiarFichaGlobal(nuevaFicha) { if (fichaActivaGlobal === nuevaFicha) return; originalRef('estado').off(); originalRef('aprobaciones').off(); originalRef('videos').off(); originalRef('configuracion/metaGuias').off(); if (fichaActivaGlobal !== "default") { originalRef('fichas/' + fichaActivaGlobal + '/estado').off(); originalRef('fichas/' + fichaActivaGlobal + '/aprobaciones').off(); originalRef('fichas/' + fichaActivaGlobal + '/videos').off(); originalRef('fichas/' + fichaActivaGlobal + '/configuracion/metaGuias').off(); } fichaActivaGlobal = nuevaFicha; videosGlobales = []; LISTADO_OFICIAL_PROTEGIDO.forEach(act => estadoMallaGlobal[act.id] = false); estudiantesActivosGlobal.forEach(e => { entregasPorEstudiante[e.documento] = {}; apelacionesPorEstudiante[e.documento] = {}; LISTADO_OFICIAL_PROTEGIDO.forEach(g => { entregasPorEstudiante[e.documento][g.id] = false; apelacionesPorEstudiante[e.documento][g.id] = "NINGUNA"; }); }); metaGuiasGlobal = 0; document.getElementById('guias-meta-global').textContent = 0; iniciarListenersContextoGlobal(); }
         function crearNuevaFicha() { const id = document.getElementById('nueva-ficha-id').value.trim(); const nombre = document.getElementById('nueva-ficha-nombre').value.trim(); if (!id || !nombre) return alert("Llena todos los campos."); originalRef('fichas_metadata/' + id).set({ nombre: nombre, id: id }).then(() => { alert("Ficha creada!"); document.getElementById('nueva-ficha-id').value = ''; document.getElementById('nueva-ficha-nombre').value = ''; }); }
-        function renderizarListaFichasAdmin() { const cont = document.getElementById('lista-fichas-admin'); if(!cont) return; let html = ''; Object.values(metadataFichasGlobal).forEach(ficha => { html += `<div class="bg-[#0b1329] border border-[#3a506b] p-3 rounded mb-2"><div class="text-purple-400 font-bold mb-2">${ficha.nombre} (ID: ${ficha.id})</div><div class="flex flex-col gap-1 pl-2">`; Object.keys(usuariosMetadataGlobal).forEach(doc => { const usr = usuariosMetadataGlobal[doc]; if (usr.fichasAsignadas !== undefined || !LISTADO_ESTUDIANTES_PROTEGIDO.find(e=>e.documento===doc)) { const tieneAcceso = usr.fichasAsignadas && usr.fichasAsignadas[ficha.id] === true; html += `<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" ${tieneAcceso ? 'checked' : ''} onchange="originalRef('usuarios/${doc}/fichasAsignadas/${ficha.id}').set(this.checked)" class="accent-purple-500"><span class="text-slate-300">${usr.nombre || doc}</span></label>`; } }); html += `</div></div>`; }); cont.innerHTML = html; }
+        function renderizarListaFichasAdmin() { const cont = document.getElementById('lista-fichas-admin'); if(!cont) return; let html = ''; Object.values(metadataFichasGlobal).forEach(ficha => { html += `<div class="bg-[#0b1329] border border-[#3a506b] p-3 rounded mb-2"><div class="text-purple-400 font-bold mb-2">${ficha.nombre} (ID: ${ficha.id})</div><div class="flex flex-col gap-1 pl-2">`; Object.keys(usuariosMetadataGlobal).forEach(doc => { const usr = usuariosMetadataGlobal[doc]; if (usr.fichasAsignadas !== undefined || !estudiantesActivosGlobal.find(e=>e.documento===doc)) { const tieneAcceso = usr.fichasAsignadas && usr.fichasAsignadas[ficha.id] === true; html += `<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" ${tieneAcceso ? 'checked' : ''} onchange="originalRef('usuarios/${doc}/fichasAsignadas/${ficha.id}').set(this.checked)" class="accent-purple-500"><span class="text-slate-300">${usr.nombre || doc}</span></label>`; } }); html += `</div></div>`; }); cont.innerHTML = html; }
         function actualizarSelectorFichas() { const selector = document.getElementById('beta-ficha-selector'); const cont = document.getElementById('contenedor-selector-ficha'); if (sesionActiva.rol === 'admin') { cont.classList.remove('hidden'); let opts = '<option value="default">Ficha Principal</option>'; Object.values(metadataFichasGlobal).forEach(f => opts += `<option value="${f.id}">${f.nombre} (Beta)</option>`); selector.innerHTML = opts; selector.value = fichaActivaGlobal; renderizarListaFichasAdmin(); } else if (sesionActiva.rol === 'profesor') { const usr = usuariosMetadataGlobal[sesionActiva.documento]; if (usr && usr.fichasAsignadas) { const fichasMias = Object.keys(usr.fichasAsignadas).filter(k => usr.fichasAsignadas[k]); if (fichasMias.length > 0) { cont.classList.remove('hidden'); let opts = '<option value="default">Ficha Principal</option>'; fichasMias.forEach(id => { if (metadataFichasGlobal[id]) opts += `<option value="${id}">${metadataFichasGlobal[id].nombre} (Beta)</option>`; }); selector.innerHTML = opts; selector.value = fichaActivaGlobal; } } else cont.classList.add('hidden'); } else cont.classList.add('hidden'); }
 
         function cerrarSesion() {
@@ -982,7 +983,7 @@
                 } catch(e) { console.error(e); }
             }
 
-            let listaCompleta = [...LISTADO_ESTUDIANTES_PROTEGIDO].map(e => ({...e}));
+            let listaCompleta = [...estudiantesActivosGlobal].map(e => ({...e}));
             
             for(const doc in usuariosFirebase) {
                 const u = usuariosFirebase[doc];
@@ -1101,8 +1102,8 @@
             tarjetasContainer.innerHTML = '';            const conteoParaHonor = [];
             
             const listaFiltrada = (sesionActiva.rol === "profesor" || sesionActiva.rol === "instructor" || sesionActiva.documento === "sena2026")
-                ? LISTADO_ESTUDIANTES_PROTEGIDO 
-                : LISTADO_ESTUDIANTES_PROTEGIDO.filter(e => e.documento === sesionActiva.documento);
+                ? estudiantesActivosGlobal 
+                : estudiantesActivosGlobal.filter(e => e.documento === sesionActiva.documento);
 
             listaFiltrada.forEach((estudiante, index) => {
                 const doc = estudiante.documento;
@@ -1294,7 +1295,7 @@
             tablaApelacionesCuerpo.innerHTML = '';
             let contadorCasos = 0;
 
-            LISTADO_ESTUDIANTES_PROTEGIDO.forEach(estudiante => {
+            estudiantesActivosGlobal.forEach(estudiante => {
                 const doc = estudiante.documento;
                 
                 if (sesionActiva.rol === "aprendiz" && sesionActiva.documento !== "sena2026" && sesionActiva.documento !== doc) return;
@@ -1480,7 +1481,7 @@
                 optDefault.textContent = "-- Seleccione un aprendiz --";
                 selectorEstudiantes.appendChild(optDefault);
                 
-                LISTADO_ESTUDIANTES_PROTEGIDO.forEach(e => {
+                estudiantesActivosGlobal.forEach(e => {
                     const opt = document.createElement('option');
                     opt.value = e.documento;
                     opt.textContent = `${e.apellidos} ${e.nombres}`;
@@ -1496,7 +1497,7 @@
             } else {
                 // Aprendiz: Solo ve el suyo
                 selectorEstudiantes.disabled = true;
-                const e = LISTADO_ESTUDIANTES_PROTEGIDO.find(est => est.documento === sesionActiva.documento);
+                const e = estudiantesActivosGlobal.find(est => est.documento === sesionActiva.documento);
                 if (e) {
                     const opt = document.createElement('option');
                     opt.value = e.documento;
@@ -1508,7 +1509,7 @@
         }
 
         function cambiarEstudianteActivo(documento) {
-            const e = LISTADO_ESTUDIANTES_PROTEGIDO.find(est => est.documento === documento);
+            const e = estudiantesActivosGlobal.find(est => est.documento === documento);
             if (e) {
                 dashNombreEstudiante.textContent = `${e.nombres} ${e.apellidos}`;
                 dashDocumentoEstudiante.textContent = `DOCUMENTO DE IDENTIDAD: ${e.documento.toUpperCase()}`;
@@ -1672,7 +1673,7 @@
         database.ref = function(path) {
             if (path === undefined) return originalRef();
             if (!path || typeof path !== 'string') return originalRef(path);
-            if (fichaActivaGlobal !== "default" && (path.startsWith('estado') || path.startsWith('aprobaciones') || path.startsWith('videos') || path.startsWith('configuracion'))) return originalRef('fichas/' + fichaActivaGlobal + '/' + path);
+            if (fichaActivaGlobal !== "3186645" && (path.startsWith('estado') || path.startsWith('aprobaciones') || path.startsWith('videos') || path.startsWith('configuracion') || path.startsWith('aprendices'))) return originalRef('fichas/' + fichaActivaGlobal + '/' + path);
             return originalRef(path);
         };
 
@@ -1686,29 +1687,52 @@
         // Esto hace que el CSV y TXT se "recuerden" sin volver a subirlos
         // =====================================================================
         function iniciarListenersContextoGlobal() {
+            // Escuchar cambios en los aprendices de esta ficha
+            database.ref('aprendices').on('value', (snap) => {
+                if (snap.exists()) {
+                    estudiantesActivosGlobal = Object.values(snap.val());
+                } else {
+                    if (fichaActivaGlobal === "3186645") {
+                        // Respaldo de los 24 originales para la Ficha Principal si la BD est vaca
+                        estudiantesActivosGlobal = [...ESTUDIANTES_HARDCODEADOS_RESPALDO];
+                        estudiantesActivosGlobal.forEach(est => database.ref('aprendices/' + est.documento).set(est));
+                    } else {
+                        estudiantesActivosGlobal = [];
+                    }
+                }
+                
+                // Asegurar que las matrices existan
+                estudiantesActivosGlobal.forEach(e => {
+                    if (!entregasPorEstudiante[e.documento]) entregasPorEstudiante[e.documento] = {};
+                    if (!apelacionesPorEstudiante[e.documento]) apelacionesPorEstudiante[e.documento] = {};
+                    LISTADO_OFICIAL_PROTEGIDO.forEach(g => {
+                        if (entregasPorEstudiante[e.documento][g.id] === undefined) entregasPorEstudiante[e.documento][g.id] = false;
+                        if (apelacionesPorEstudiante[e.documento][g.id] === undefined) apelacionesPorEstudiante[e.documento][g.id] = "NINGUNA";
+                    });
+                });
+                
+                construirSelectorDashboard();
+                actualizarVentanaAprendices();
+            });
+
             database.ref('estado').once('value', (snapshot) => {
             const estado = snapshot.val();
             if (!estado) return;
 
-            // Restaurar entregas del CSV
             if (estado.entregas) {
                 Object.keys(estado.entregas).forEach(doc => {
-                    if (entregasPorEstudiante[doc]) {
-                        Object.assign(entregasPorEstudiante[doc], estado.entregas[doc]);
-                    }
+                    if (!entregasPorEstudiante[doc]) entregasPorEstudiante[doc] = {};
+                    Object.assign(entregasPorEstudiante[doc], estado.entregas[doc]);
                 });
             }
 
-            // Restaurar apelaciones
             if (estado.apelaciones) {
                 Object.keys(estado.apelaciones).forEach(doc => {
-                    if (apelacionesPorEstudiante[doc]) {
-                        Object.assign(apelacionesPorEstudiante[doc], estado.apelaciones[doc]);
-                    }
+                    if (!apelacionesPorEstudiante[doc]) apelacionesPorEstudiante[doc] = {};
+                    Object.assign(apelacionesPorEstudiante[doc], estado.apelaciones[doc]);
                 });
             }
 
-            // Restaurar estado de la malla (Control de Guías)
             if (estado.malla) {
                 Object.keys(estado.malla).forEach(id => {
                     if (estadoMallaGlobal.hasOwnProperty(id)) {
@@ -1720,32 +1744,28 @@
                 actualizarContadores();
             } else {
                 const cacheMalla = localStorage.getItem('mallaGlobalSena');
-                if (cacheMalla && fichaActivaGlobal === "default") {
+                if (cacheMalla && fichaActivaGlobal === "3186645") {
                     try {
                         const parsedMalla = JSON.parse(cacheMalla);
                         Object.keys(parsedMalla).forEach(id => { if (estadoMallaGlobal.hasOwnProperty(id)) estadoMallaGlobal[id] = parsedMalla[id]; });
-                        cargarTablaMallaOficial(); actualizarContadores(); actualizarVentanaAprendices();
+                        cargarTablaMallaOficial(); actualizarContadores();
                     } catch(e){}
                 }
             }
 
-            // Actualizar todas las vistas
             actualizarVentanaAprendices();
             renderizarDashboardPendientes();
             generarConsolidadoApelaciones();
 
-            // Guardar en localStorage también para acceso rápido
             localStorage.setItem('entregasSena', JSON.stringify(entregasPorEstudiante));
             localStorage.setItem('apelacionesSena', JSON.stringify(apelacionesPorEstudiante));
         });
 
-        // Leer caché local inicialmente para no mostrar vacío
         const videosCache = localStorage.getItem('videosCacheSena');
         if (videosCache) {
             try { videosGlobales = JSON.parse(videosCache); renderizarVideos(); actualizarDatalistInstructores(); } catch (e) {}
         }
 
-        // --- SINCRONIZACIÓN DE VIDEOS ---
         database.ref('videos').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -1753,9 +1773,12 @@
                 localStorage.setItem('videosCacheSena', JSON.stringify(videosGlobales));
                 actualizarDatalistInstructores();
                 renderizarVideos();
+            } else {
+                videosGlobales = [];
+                renderizarVideos();
             }
         });
-        database.ref('configuracion/metaGuias').on('value', snap => { if(snap.val() !== null) { metaGuiasGlobal = snap.val(); document.getElementById('guias-meta-global').textContent = metaGuiasGlobal; } });
+        database.ref('configuracion/metaGuias').on('value', snap => { if(snap.val() !== null) { metaGuiasGlobal = snap.val(); document.getElementById('guias-meta-global').textContent = metaGuiasGlobal; actualizarVentanaAprendices(); } else { metaGuiasGlobal = 0; document.getElementById('guias-meta-global').textContent = 0; actualizarVentanaAprendices();} });
         }
         iniciarListenersContextoGlobal();
 
@@ -1837,7 +1860,7 @@
 
         function guardarAprobacionEnExcel(documento, guiaId, estado) {
             // Mantengo el nombre para no romper otras funciones, pero ahora sincroniza con Firebase
-            const estudiante = LISTADO_ESTUDIANTES_PROTEGIDO.find(e => e.documento === documento);
+            const estudiante = estudiantesActivosGlobal.find(e => e.documento === documento);
             const nombre = estudiante ? `${estudiante.nombres} ${estudiante.apellidos}` : "Desconocido";
             const fecha = new Date().toLocaleString();
             
