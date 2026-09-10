@@ -176,6 +176,19 @@
         </div>
     </div>
 <!-- MODAL EDICIÓN PERFIL -->
+    <!-- ================= MODAL NOTIFICACIONES (ADMIN) ================= -->
+    <div id="modal-notificaciones" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+        <div class="bg-[#1c2541] border border-[#3a506b] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col">
+            <div class="p-6 border-b border-[#3a506b] flex justify-between items-center bg-[#0b1329]">
+                <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-bell text-rose-400 mr-2"></i> Solicitudes de Contraseña</h3>
+                <button onclick="document.getElementById('modal-notificaciones').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 flex-1 overflow-y-auto max-h-[60vh] space-y-3" id="lista-notificaciones-admin">
+                <!-- Se inyectan las notificaciones -->
+            </div>
+        </div>
+    </div>
+    
     <div id="modal-perfil" class="fixed inset-0 bg-[#0b1329]/90 z-[100] flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-[#1c2541] border border-[#3a506b] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div class="bg-[#0b1329] px-6 py-4 border-b border-[#3a506b] flex justify-between items-center"><h2 class="text-white font-bold text-lg"><i class="fa-solid fa-user-pen text-emerald-400 mr-2"></i> Editar Perfil</h2><button onclick="document.getElementById('modal-perfil').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button></div>
@@ -237,22 +250,23 @@
 
             </div>
             
-            <div class="border-t border-[#3a506b] pt-4 space-y-3">
-                <button onclick="abrirModalPerfil()" class="w-full flex items-center gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-2 rounded-lg font-semibold transition-all mb-3"><i class="fa-solid fa-user-edit text-blue-400"></i> Editar Mi Perfil</button>
-            <div class="border-t border-[#3a506b] pt-4 space-y-3">
-                <div class="flex items-center gap-3">
+            <div class="relative group mt-auto border-t border-[#3a506b] pt-2 pb-2">
+                <button class="w-full flex items-center gap-3 text-left hover:bg-[#3a506b]/40 p-2 rounded-lg transition-all relative z-10">
                     <div id="avatar-rol" class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-black uppercase">--</div>
-                    <div class="truncate w-40">
-                        <p id="user-display-name" class="text-sm font-semibold truncate text-white">Malla Curricular</p>
+                    <div class="truncate flex-1">
+                        <p id="user-display-name" class="text-sm font-semibold truncate text-white">Cargando...</p>
                         <p id="total-indicador" class="text-xs text-slate-400">0 Habilitadas</p>
                     </div>
+                    <i class="fa-solid fa-chevron-up text-slate-400"></i>
+                </button>
+                
+                <!-- Dropdown -->
+                <div class="absolute bottom-full left-0 w-full mb-1 bg-[#1c2541] border border-[#3a506b] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex flex-col p-1.5 z-50">
+                    <button onclick="abrirModalPerfil()" class="text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#3a506b]/50 rounded-md transition-colors"><i class="fa-solid fa-user-edit mr-2 text-blue-400"></i> Editar Mi Perfil</button>
+                    <button onclick="cambiarClaveUsuario()" class="text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#3a506b]/50 rounded-md transition-colors"><i class="fa-solid fa-key mr-2 text-emerald-400"></i> Cambiar Contraseña</button>
+                    <div class="h-px bg-[#3a506b] my-1"></div>
+                    <button onclick="cerrarSesion()" class="text-left px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-md transition-colors"><i class="fa-solid fa-sign-out-alt mr-2"></i> Cerrar Sesión</button>
                 </div>
-                <button onclick="cambiarClaveUsuario()" class="w-full text-left text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-2 pt-2 border-t border-[#3a506b]/40">
-                    <i class="fa-solid fa-key"></i> Cambiar Contraseña
-                </button>
-                <button onclick="cerrarSesion()" class="w-full text-left text-xs text-rose-400 hover:text-rose-300 font-bold flex items-center gap-2 pt-2 mt-2">
-                    <i class="fa-solid fa-power-off"></i> Cerrar Sesión Activa
-                </button>
             </div>
         </aside>
 
