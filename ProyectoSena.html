@@ -2031,7 +2031,14 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            let estudiante;
+            const selector = document.getElementById('seleccionar-aprendiz');
+            if (selector && !selector.parentElement.parentElement.classList.contains('hidden') && selector.value !== 'todos') {
+                estudiante = estudiantesActivosGlobal.find(e => e.documento === selector.value);
+            }
+            if (!estudiante) {
+                estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            }
             const nombre = estudiante.nombres ? `${estudiante.nombres} ${estudiante.apellidos}` : estudiante.documento;
             
             doc.setFontSize(16);
@@ -2059,7 +2066,14 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
         };
 
         window.exportarEstudianteExcel = function() {
-            const estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            let estudiante;
+            const selector = document.getElementById('seleccionar-aprendiz');
+            if (selector && !selector.parentElement.parentElement.classList.contains('hidden') && selector.value !== 'todos') {
+                estudiante = estudiantesActivosGlobal.find(e => e.documento === selector.value);
+            }
+            if (!estudiante) {
+                estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            }
             
             const data = [];
             LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
@@ -2081,7 +2095,14 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
         };
 
         window.enviarEstudianteCorreo = function() {
-            const estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            let estudiante;
+            const selector = document.getElementById('seleccionar-aprendiz');
+            if (selector && !selector.parentElement.parentElement.classList.contains('hidden') && selector.value !== 'todos') {
+                estudiante = estudiantesActivosGlobal.find(e => e.documento === selector.value);
+            }
+            if (!estudiante) {
+                estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            }
             const nombre = estudiante.nombres ? `${estudiante.nombres} ${estudiante.apellidos}` : estudiante.documento;
             
             let faltantes = 0;
