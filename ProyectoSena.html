@@ -2026,6 +2026,136 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
             }
         });
 
+    // ================= MODIFICACIÓN: EXPORTACIÓN =================
+        window.exportarEstudiantePDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            const nombre = estudiante.nombres ? `${estudiante.nombres} ${estudiante.apellidos}` : estudiante.documento;
+            
+            doc.setFontSize(16);
+            doc.text(`Reporte de Avance - SENA`, 14, 20);
+            doc.setFontSize(12);
+            doc.text(`Aprendiz: ${nombre}`, 14, 30);
+            doc.text(`Documento: ${estudiante.documento}`, 14, 38);
+            
+            const body = [];
+            LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
+                if (estadoMallaGlobal[guia.id]) {
+                    const entregado = entregasPorEstudiante[estudiante.documento]?.[guia.id] ? "Sí (A)" : "Faltante";
+                    body.push([guia.id, guia.nombre.substring(0, 50) + "...", entregado]);
+                }
+            });
+            
+            doc.autoTable({
+                startY: 45,
+                head: [['ID Guía', 'Nombre', 'Estado']],
+                body: body,
+            });
+            
+            doc.save(`Reporte_SENA_${estudiante.documento}.pdf`);
+        };
+
+        window.exportarEstudianteExcel = function() {
+            const estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            
+            const data = [];
+            LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
+                if (estadoMallaGlobal[guia.id]) {
+                    const entregado = entregasPorEstudiante[estudiante.documento]?.[guia.id] ? "Aprobado" : "Faltante";
+                    data.push({
+                        "ID Guía": guia.id,
+                        "Nombre de Guía": guia.nombre,
+                        "Estado": entregado
+                    });
+                }
+            });
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte Aprendiz");
+            XLSX.writeFile(wb, `Reporte_SENA_${estudiante.documento}.xlsx`);
+        };
+
+        window.enviarEstudianteCorreo = function() {
+            const estudiante = estudiantesActivosGlobal.find(e => e.documento.toLowerCase() === sesionActiva.documento.toLowerCase()) || sesionActiva;
+            const nombre = estudiante.nombres ? `${estudiante.nombres} ${estudiante.apellidos}` : estudiante.documento;
+            
+            let faltantes = 0;
+            let aprobadas = 0;
+            LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
+                if (estadoMallaGlobal[guia.id]) {
+                    if (entregasPorEstudiante[estudiante.documento]?.[guia.id]) aprobadas++;
+                    else faltantes++;
+                }
+            });
+            
+            const asunto = encodeURIComponent(`Reporte de Avance SENA - ${nombre}`);
+            const cuerpo = encodeURIComponent(`Hola,
+
+Adjunto (por favor adjuntar archivo PDF o Excel exportado manualmente) mi reporte de avance en el programa SENA.
+
+Resumen:
+- Aprendiz: ${nombre}
+- Cédula: ${estudiante.documento}
+- Guías Aprobadas: ${aprobadas}
+- Guías Faltantes: ${faltantes}
+
+Quedo atento(a).
+Saludos.`);
+            
+            window.location.href = `mailto:?subject=${asunto}&body=${cuerpo}`;
+        };
+
+        window.exportarGlobalPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.text(`Reporte Global de Ficha - SENA`, 14, 20);
+            doc.setFontSize(10);
+            
+            const body = [];
+            estudiantesActivosGlobal.forEach(est => {
+                let faltantes = 0;
+                let aprobadas = 0;
+                LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
+                    if (estadoMallaGlobal[guia.id]) {
+                        if (entregasPorEstudiante[est.documento]?.[guia.id]) aprobadas++;
+                        else faltantes++;
+                    }
+                });
+                const nombre = est.nombres ? `${est.nombres} ${est.apellidos}` : "Aprendiz";
+                body.push([est.documento, nombre, aprobadas, faltantes]);
+            });
+            
+            doc.autoTable({
+                startY: 30,
+                head: [['Documento', 'Nombre', 'Aprobadas', 'Faltantes']],
+                body: body,
+            });
+            
+            doc.save(`Reporte_Global_Ficha_${fichaActivaGlobal}.pdf`);
+        };
+
+        window.exportarGlobalExcel = function() {
+            const data = [];
+            estudiantesActivosGlobal.forEach(est => {
+                let obj = { "Documento": est.documento, "Nombres": est.nombres || "", "Apellidos": est.apellidos || "" };
+                LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
+                    if (estadoMallaGlobal[guia.id]) {
+                        obj[guia.id] = entregasPorEstudiante[est.documento]?.[guia.id] ? "A" : "";
+                    }
+                });
+                data.push(obj);
+            });
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Consolidado Global");
+            XLSX.writeFile(wb, `Reporte_Global_Ficha_${fichaActivaGlobal}.xlsx`);
+        };
     </script>
 </body>
 </html>
