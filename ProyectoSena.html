@@ -222,6 +222,12 @@
                         <i class="fa-solid fa-layer-group text-purple-400"></i> Gestión de Fichas
                     </button>
                 </nav>
+                <div class="mt-2">
+                    <button id="nav-notificaciones" onclick="abrirModalNotificaciones()" class="admin-only role-restricted hidden w-full flex items-center justify-between gap-3 text-slate-400 hover:text-white hover:bg-[#3a506b]/40 px-4 py-3 rounded-lg font-semibold transition-all">
+                        <div class="flex items-center gap-3"><i class="fa-solid fa-bell text-rose-400"></i> Notificaciones</div>
+                        <span id="badge-notificaciones" class="hidden bg-rose-500 text-white text-[10px] rounded-full px-2 py-0.5 font-bold">0</span>
+                    </button>
+                </div>
                 <div class="mt-6 bg-[#0b1329] border border-[#3a506b] rounded-lg p-4 text-center relative group">
                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Guías a la fecha</p>
                     <p id="guias-meta-global" class="text-3xl font-black text-emerald-400 drop-shadow-md">0</p>
