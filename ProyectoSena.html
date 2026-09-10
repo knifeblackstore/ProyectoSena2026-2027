@@ -2032,7 +2032,7 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
             const doc = new jsPDF();
             
             let estudiante;
-            const selector = document.getElementById('seleccionar-aprendiz');
+            const selector = document.getElementById('selector-estudiantes');
             if (selector && !selector.parentElement.parentElement.classList.contains('hidden') && selector.value !== 'todos') {
                 estudiante = estudiantesActivosGlobal.find(e => e.documento === selector.value);
             }
@@ -2067,7 +2067,7 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
 
         window.exportarEstudianteExcel = function() {
             let estudiante;
-            const selector = document.getElementById('seleccionar-aprendiz');
+            const selector = document.getElementById('selector-estudiantes');
             if (selector && !selector.parentElement.parentElement.classList.contains('hidden') && selector.value !== 'todos') {
                 estudiante = estudiantesActivosGlobal.find(e => e.documento === selector.value);
             }
@@ -2096,7 +2096,7 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
 
         window.enviarEstudianteCorreo = function() {
             let estudiante;
-            const selector = document.getElementById('seleccionar-aprendiz');
+            const selector = document.getElementById('selector-estudiantes');
             if (selector && !selector.parentElement.parentElement.classList.contains('hidden') && selector.value !== 'todos') {
                 estudiante = estudiantesActivosGlobal.find(e => e.documento === selector.value);
             }
