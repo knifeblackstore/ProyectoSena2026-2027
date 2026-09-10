@@ -2043,8 +2043,9 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
             const body = [];
             LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
                 if (estadoMallaGlobal[guia.id]) {
-                    const entregado = entregasPorEstudiante[estudiante.documento]?.[guia.id] ? "Sí (A)" : "Faltante";
-                    body.push([guia.id, guia.nombre.substring(0, 50) + "...", entregado]);
+                    if (entregasPorEstudiante[estudiante.documento]?.[guia.id]) {
+                        body.push([guia.id, guia.nombre.substring(0, 50) + "...", "Aprobado (A)"]);
+                    }
                 }
             });
             
@@ -2063,12 +2064,13 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
             const data = [];
             LISTADO_OFICIAL_PROTEGIDO.forEach(guia => {
                 if (estadoMallaGlobal[guia.id]) {
-                    const entregado = entregasPorEstudiante[estudiante.documento]?.[guia.id] ? "Aprobado" : "Faltante";
-                    data.push({
-                        "ID Guía": guia.id,
-                        "Nombre de Guía": guia.nombre,
-                        "Estado": entregado
-                    });
+                    if (entregasPorEstudiante[estudiante.documento]?.[guia.id]) {
+                        data.push({
+                            "ID Guía": guia.id,
+                            "Nombre de Guía": guia.nombre,
+                            "Calificación": "A"
+                        });
+                    }
                 }
             });
             
