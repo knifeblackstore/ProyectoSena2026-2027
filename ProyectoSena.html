@@ -255,6 +255,10 @@
             <section id="window-aprendices" class="window-pane space-y-6">
                 <header class="border-b border-[#3a506b] pb-4">
                     <h2 class="text-3xl font-extrabold text-white">Ventana de Aprendices</h2>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <button onclick="exportarGlobalPDF()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-4 rounded text-sm transition-colors admin-only role-restricted hidden"><i class="fa-solid fa-file-pdf mr-1"></i> Reporte Global PDF</button>
+                    <button onclick="exportarGlobalExcel()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-4 rounded text-sm transition-colors admin-only role-restricted hidden"><i class="fa-solid fa-file-excel mr-1"></i> Reporte Global Excel</button>
+                </div>
                     <p id="aprendices-subtitulo" class="text-slate-400">Cruza las guías habilitadas globales vs las entregadas ("A"). Permite reportar y hacer seguimiento a las apelaciones.</p>
                 </header>
             <!-- CUADRO DE HONOR -->
@@ -293,6 +297,11 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
                             <h2 class="text-3xl font-extrabold text-white">Dashboard Individual</h2>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <button onclick="exportarEstudiantePDF()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-4 rounded text-sm transition-colors"><i class="fa-solid fa-file-pdf mr-1"></i> Exportar PDF</button>
+                    <button onclick="exportarEstudianteExcel()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-4 rounded text-sm transition-colors"><i class="fa-solid fa-file-excel mr-1"></i> Exportar Excel</button>
+                    <button onclick="enviarEstudianteCorreo()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-4 rounded text-sm transition-colors"><i class="fa-solid fa-envelope mr-1"></i> Enviar por Correo</button>
+                </div>
                             <p class="text-slate-400">Seleccione un aprendiz para validar y calificar las guías que han sido habilitadas.</p>
                         </div>
                         
