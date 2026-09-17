@@ -1917,7 +1917,7 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
         database.ref('videos').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                videosGlobales = Object.values(data);
+                videosGlobales = Object.entries(data).map(([id, val]) => ({ id, ...val }));
                 localStorage.setItem('videosCacheSena', JSON.stringify(videosGlobales));
                 actualizarDatalistInstructores();
                 renderizarVideos();
@@ -1969,7 +1969,7 @@ const ESTUDIANTES_HARDCODEADOS_RESPALDO = [
                 html += `<details class="col-span-full mb-3 group bg-[#1c2541]/50 rounded-xl border border-[#3a506b] overflow-hidden"><summary class="list-none cursor-pointer p-4 bg-gradient-to-r from-emerald-500/20 to-transparent flex items-center justify-between text-emerald-400 font-bold uppercase tracking-wider select-none hover:bg-emerald-500/30 transition-colors"><div class="flex items-center gap-3"><i class="fa-solid fa-chalkboard-user"></i> Instructor: ${inst}<span class="text-xs bg-emerald-500 text-[#0b1329] px-2 py-0.5 rounded-full ml-2">${agrupar[inst].length} videos</span></div><i class="fa-solid fa-chevron-down transition-transform group-open:rotate-180"></i></summary><div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">`;
                 agrupar[inst].sort((a,b)=>{ const getD=t=>{const m=t.match(/(\d{2})-(\d{2})-(\d{2})/); return m?new Date('20'+m[3],m[2]-1,m[1]):new Date(0);}; return getD(b.titulo)-getD(a.titulo); });
                 agrupar[inst].forEach(v => {
-                    const adminHtml = sesionActiva.rol === 'admin' ? `<div class="flex gap-2 mt-2"><button onclick="editarVideo('${v.id}')" class="flex-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-500 py-1 rounded text-xs transition-colors"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarVideo('${v.id}')" class="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-500 py-1 rounded text-xs transition-colors"><i class="fa-solid fa-trash"></i></button></div>` : '';
+                    const adminHtml = (sesionActiva.rol === 'profesor' || sesionActiva.rol === 'admin') ? `<div class="flex gap-2 mt-2"><button onclick="editarVideo('${v.id}')" class="flex-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-500 py-1 rounded text-xs transition-colors"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarVideo('${v.id}')" class="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-500 py-1 rounded text-xs transition-colors"><i class="fa-solid fa-trash"></i></button></div>` : '';
                     html += `<div class="bg-[#0b1329] border border-[#3a506b] hover:border-emerald-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg transition-all group/card"><h4 class="text-sm font-bold text-white mb-4 group-hover/card:text-emerald-400 transition-colors" style="min-height: 2.5rem">${v.titulo}</h4><div><a href="${v.url}" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg text-center transition-all text-xs flex items-center justify-center gap-2"><i class="fa-brands fa-youtube text-lg"></i> Ver Grabación</a>${adminHtml}</div></div>`;
                 });
                 html += `</div></details>`;
