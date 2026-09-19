@@ -250,27 +250,30 @@
 
             </div>
             
-            <div class="relative group mt-auto border-t border-[#3a506b] pt-2 pb-2">
-                <button class="w-full flex items-center gap-3 text-left hover:bg-[#3a506b]/40 p-2 rounded-lg transition-all relative z-10">
-                    <div id="avatar-rol" class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-black uppercase">--</div>
-                    <div class="truncate flex-1">
-                        <p id="user-display-name" class="text-sm font-semibold truncate text-white">Cargando...</p>
-                        <p id="total-indicador" class="text-xs text-slate-400">0 Habilitadas</p>
-                    </div>
-                    <i class="fa-solid fa-chevron-up text-slate-400"></i>
-                </button>
-                
-                <!-- Dropdown -->
-                <div class="absolute bottom-full left-0 w-full mb-1 bg-[#1c2541] border border-[#3a506b] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex flex-col p-1.5 z-50">
-                    <button onclick="abrirModalPerfil()" class="text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#3a506b]/50 rounded-md transition-colors"><i class="fa-solid fa-user-edit mr-2 text-blue-400"></i> Editar Mi Perfil</button>
-                    <button onclick="cambiarClaveUsuario()" class="text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-[#3a506b]/50 rounded-md transition-colors"><i class="fa-solid fa-key mr-2 text-emerald-400"></i> Cambiar Contraseña</button>
-                    <div class="h-px bg-[#3a506b] my-1"></div>
-                    <button onclick="cerrarSesion()" class="text-left px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-md transition-colors"><i class="fa-solid fa-sign-out-alt mr-2"></i> Cerrar Sesión</button>
-                </div>
-            </div>
+
         </aside>
 
         <main class="flex-1 overflow-y-auto p-6 md:p-10">
+            <!-- Perfil / Dropdown Menu en la parte de arriba (Mobile y Desktop) -->
+            <div class="fixed top-4 right-4 md:top-6 md:right-8 z-[200] group">
+                <button onclick="document.getElementById('mobile-dropdown').classList.toggle('hidden')" class="bg-[#1c2541] border border-[#3a506b] flex items-center gap-3 text-left hover:bg-[#3a506b]/40 p-2 md:p-3 rounded-full md:rounded-lg shadow-xl transition-all">
+                    <div id="avatar-rol" class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-black uppercase shadow-inner">--</div>
+                    <div class="hidden md:block truncate max-w-[150px]">
+                        <p id="user-display-name" class="text-sm font-semibold truncate text-white">Cargando...</p>
+                        <p id="total-indicador" class="text-xs text-emerald-400">0 Habilitadas</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-slate-400 hidden md:block"></i>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div id="mobile-dropdown" class="hidden absolute top-full right-0 mt-2 w-56 bg-[#1c2541] border border-[#3a506b] rounded-lg shadow-2xl flex flex-col p-1.5 overflow-hidden">
+                    <button onclick="abrirModalPerfil(); document.getElementById('mobile-dropdown').classList.add('hidden')" class="text-left px-3 py-3 text-sm text-slate-300 hover:text-white hover:bg-[#3a506b]/80 rounded-md transition-colors"><i class="fa-solid fa-user-edit mr-2 text-blue-400"></i> Editar Mi Perfil</button>
+                    <button onclick="cambiarClaveUsuario(); document.getElementById('mobile-dropdown').classList.add('hidden')" class="text-left px-3 py-3 text-sm text-slate-300 hover:text-white hover:bg-[#3a506b]/80 rounded-md transition-colors"><i class="fa-solid fa-key mr-2 text-emerald-400"></i> Cambiar Contraseña</button>
+                    <div class="h-px bg-[#3a506b] my-1"></div>
+                    <button onclick="cerrarSesion()" class="text-left px-3 py-3 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 rounded-md transition-colors font-bold"><i class="fa-solid fa-sign-out-alt mr-2"></i> Cerrar Sesión</button>
+                </div>
+            </div>
+
             
             <section id="window-aprendices" class="window-pane space-y-6">
                 <header class="border-b border-[#3a506b] pb-4">
